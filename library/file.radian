@@ -1,0 +1,51 @@
+# Copyright 2010 Mars Saxman
+#
+# This software is provided 'as-is', without any express or implied warranty.
+# In no event will the authors be held liable for any damages arising from the
+# use of this software.
+#
+# Permission is granted to anyone to use this software for any purpose,
+# including commercial applications, and to alter it and redistribute it freely,
+# subject to the following restrictions:
+#
+# 1. The origin of this software must not be misrepresented; you must not claim
+# that you wrote the original software. If you use this software in a product,
+# an acknowledgment in the product documentation would be appreciated but is
+# not required.
+#
+# 2. Altered source versions must be plainly marked as such, and must not be
+# misrepresented as being the original software.
+#
+# 3. This notice may not be removed or altered from any source distribution.
+
+function read_bytes(path):
+	# Read the contents of the specified file as a byte buffer.
+	# Returns an IO action whose response will be the buffer.
+	result = _builtin_read_bytes(path)
+end read_bytes
+
+function read_string(path, encoding):
+	# Read this file in as a string, using the specified encoding.
+	# Returns an IO action whose response will be the buffer.
+	var bytes = sync( file.read_bytes( path ) )
+	result = encoding.from_bytes( bytes )
+end read_string
+
+function write_bytes(path, bytes):
+	# Write the byte stream to the specified file path. Will overwrite the
+	# file if present, create it if not present, and leave its length equal
+	# to the length of the byte stream.
+	# Returns an IO action which will respond with zero if it succeeds and an
+	# exception if it fails.
+	result = _builtin_write_bytes(path, bytes)
+end write_bytes
+
+function write_string(path, str, encoding):
+	# Write the string to the specified file path using the specified encoding.
+	# Will overwrite/replace the file if present, create it if not present.
+	# Returns an IO action which will respond with zero if it succeeds and an
+	# exception if it fails.
+	var bytes = encoding.to_bytes( str )
+	result = file.write_bytes( path, bytes )
+end write_string
+

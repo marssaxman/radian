@@ -1,0 +1,27 @@
+# This test does not work.
+# I'm not sure whether it fails because the compiler is handling it wrong or
+# because the test itself is invalid. This is a distinctly artificial use case,
+# so it's hard to tell whether it should work. I'll take another look at it
+# after I have a better developed main IO loop and some IO actions I can send
+# out to it.
+
+function echomat(starter):
+	while starter != 0:
+		starter = sync(starter)
+	end while
+end echomat
+
+var stat = echomat(4)
+assert stat has :start
+stat->start
+assert stat has :is_running
+assert stat has :send
+assert stat has :response
+#var iterations = 0
+#while stat.is_running:
+#	stat->send( stat.response - 1 )
+#	iterations->add(1)
+#end while
+#assert iterations = 4
+
+

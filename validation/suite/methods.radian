@@ -1,0 +1,47 @@
+# we can use the arrow syntax to call a mutating method
+# a mutating method can modify 'self'
+# we can stack arrows up arbitrarily deep
+
+object pair(l, r):
+	var left = l
+	var right = r
+end pair
+
+var foo = pair("one", "two")
+var bar = pair("three", "four")
+var baz = pair(foo, bar)
+
+assert baz.left.left = "one"
+assert baz.left.right = "two"
+assert baz.right.left = "three"
+assert baz.right.right = "four"
+	
+baz->left->right = "squbble"
+def gup = baz.left
+assert gup.right = "squbble"
+
+object assimilator:
+	def left = 0
+	method become(x):
+		self = x
+	end become
+end assimilator
+var box = assimilator
+assert box.left = 0
+box->become(gup)
+assert box.left = "one"
+
+
+object smunger:
+	var foo = 42
+	method increment(x):
+		self->foo = self.foo + x
+	end increment
+end smunger
+
+var smungerA = smunger
+smungerA->increment(13)
+var smungerB = smunger
+smungerB->foo->add(13)
+assert smungerA.foo = smungerB.foo
+

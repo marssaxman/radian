@@ -1,0 +1,34 @@
+# there was a problem with very weird symptoms which boiled down to an
+# erroneous index calculation for loop tuple members. this was the test case.
+# it's not exercising anything specific, but it'll be nice to make sure that
+# particular problem never crops up again.
+
+var foo = 1, 2, 3
+assert foo[0] = 1
+var x
+var y
+var z
+(x, y, z) = foo
+assert z = 3
+assert foo.size = 3
+
+function charm:
+	var sum = 0
+	for i in foo:
+		sum = sum + i
+	end i
+	result = sum
+end charm
+assert charm = 6
+
+function strange:
+	var sum = 0
+	var iter = foo.iterate
+	while iter.is_valid:
+		sum = sum + iter.current
+		iter->next
+	end while
+	result = sum
+end strange
+assert strange = 6
+

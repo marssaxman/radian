@@ -1,0 +1,20 @@
+How to install the Xcode language specification files, XCode 3 and later.
+
+For the current user only:
+1. Create this folder, if it doesn't already exist:
+	mkdir ~/Library/Application\ Support/Shared/Xcode/Specifications
+
+2. Copy in the pbfilespec and pblangspec files:
+	cp radian.pb*spec ~/Library/Application\ Support/Shared/Xcode/Specifications/
+
+3. Restart Xcode
+	
+To install these files for all users on the system, the process is almost the same.
+
+1. Create this folder, if it doesn't already exist:
+	mkdir /Library/Application\ Support/Shared/Xcode/Specifications
+
+2. Copy in the pbfilespec and pblangspec files: 
+	cp radian.pb*spec /Library/Application\ Support/Shared/Xcode/Specifications/
+
+3. Restart Xcode	

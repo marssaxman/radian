@@ -1,0 +1,39 @@
+import sequence from radian
+import relation from radian
+import string from radian
+import number from radian
+
+#asynchronous function which contains a loop which yields
+function whipple:
+	import string from radian
+	var x = 1
+	while x <= 3:
+		yield "foof"
+		yield string.decimal(x)
+		x->add(1)
+	end while
+end whipple
+
+var expected = ["foof", "1", "foof", "2", "foof", "3"]
+var rel = sequence.compare(whipple, expected)
+assert relation.is_equal(rel)
+
+function grunk(sputch):
+	for x in sputch:
+		yield x
+	end x
+end grunk
+expected = ("ein", "zwei", "drei")
+rel = sequence.compare(grunk(expected), expected)
+assert relation.is_equal(rel)
+
+
+function lump:
+	for x in number.range(1, 10):
+		yield string.decimal(x)
+	end x
+end lump
+expected = "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"
+rel = sequence.compare(lump, expected)
+assert relation.is_equal(rel)
+

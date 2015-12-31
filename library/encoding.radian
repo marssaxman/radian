@@ -1,0 +1,261 @@
+# library/encoding.radian: definitions of common string encodings
+#
+# Copyright 2012 Mars Saxman
+#
+# This software is provided 'as-is', without any express or implied warranty.
+# In no event will the authors be held liable for any damages arising from the
+# use of this software.
+#
+# Permission is granted to anyone to use this software for any purpose,
+# including commercial applications, and to alter it and redistribute it freely,
+# subject to the following restrictions:
+#
+# 1. The origin of this software must not be misrepresented; you must not claim
+# that you wrote the original software. If you use this software in a product,
+# an acknowledgment in the product documentation would be appreciated but is
+# not required.
+#
+# 2. Altered source versions must be plainly marked as such, and must not be
+# misrepresented as being the original software.
+#
+# 3. This notice may not be removed or altered from any source distribution.
+
+
+# A string encoding is a mechanism for converting from bytes to a string and
+# back again.  There are a great many legacy string encodings we don't really
+# care about; the encodings to implement here are the ones almost every program
+# will likely need.
+
+# These implementations predate the introduction of generators and yield
+# statements, and ought to be rewritten. There's no need to generate an entire
+# buffer up front when you can perform streaming conversions, especially when
+# streaming conversions can be parallelized.
+
+# Names are defined here:
+#	http://www.iana.org/assignments/character-sets
+# Use the preferred MIME name if multiple aliases are defined.
+
+function type(obj):
+	result = obj has :from_bytes and obj has :to_bytes and obj has :name
+end type
+
+
+object ascii:
+	function name = "US-ASCII"
+	function byte_size(val):
+		# compute the number of chars in this string
+	end byte_size
+	function from_bytes(bytes):
+		result = ""
+		for byte in bytes:
+			if byte < 0 or byte > 127:
+				byte = 0x00FFFD
+			end if
+			result->concatenate( _builtin_char_from_int( byte ) )
+		end byte
+	end from_bytes
+	function to_bytes(string):
+		import list from radian
+		result = list.blank
+		for char in string:
+			assert char >= 0 and char <= 127
+			result->append( char )
+		end char
+	end to_bytes
+end ascii
+
+object utf8:
+	function name = "UTF-8"
+	function from_bytes(bytes):
+		result = ""
+		var char = 0
+		var expected = 0
+		for byte in bytes:
+			if byte <= 0x7F:
+				# Single-byte ASCII char
+				result->concatenate( _builtin_char_from_int( byte ) )
+				expected = 0
+			else if byte.bit_and( 0xC0 ) = 0x80:
+				# following character in a multibyte sequence
+				if expected > 0:
+					char->shift_left( 6 )
+					char->bit_or( byte.bit_and( 0x3F ) )
+					expected->subtract( 1 )
+					if expected = 0:
+						result->concatenate( _builtin_char_from_int( char ) )
+					end if
+				else:
+					result->concatenate( "\uFFFD" )
+				end if
+			else if byte.bit_and( 0xE0 ) = 0xC0:
+				# beginning of a two-byte sequence
+				char = byte.bit_and( 0x1F )
+				expected = 1
+			else if byte.bit_and( 0xF0 ) = 0xE0:
+				# beginning of a three-byte sequence
+				char = byte.bit_and( 0x0F )
+				expected = 2
+			else if byte.bit_and( 0xF8 ) = 0xF0:
+				# beginning of a four-byte sequence
+				expected = 3
+			else:
+				# erroneous byte sequence
+				result->concatenate( "\uFFFD" )
+			end if
+		end byte
+		if expected > 0:
+			result->concatenate( "\uFFFD" )
+		end if
+	end from_bytes
+	function to_bytes(string):
+		import list from radian
+		result = list.blank
+		for ch in string:
+			if ch <= 0x00007F:
+				result->append( ch )
+			else if ch >= 0x000080 and ch <= 0x0007FF:
+				result->append( 0xC0.bit_or( (ch >> 6).bit_and( 0x1F ) ) )
+				result->append( 0x80.bit_or( ch.bit_and(0x3F) ) )
+			else if ch >= 0x000800 and ch <= 0x00FFFF:
+				result->append( 0xE0.bit_or( (ch>>12).bit_and( 0x0F ) ) )
+				result->append( 0x80.bit_or( (ch>>6).bit_and( 0x3F ) ) )
+				result->append( 0x80.bit_or( ch.bit_and( 0x3F ) ) )
+			else if ch >= 0x010000 and ch <= 0x10FFFF:
+				result->append( 0xF0.bit_or( (ch>>18).bit_and( 0x07 ) ) )
+				result->append( 0x80.bit_or( (ch>>12).bit_and( 0x3F ) ) )
+				result->append( 0x80.bit_or( (ch>>6).bit_and( 0x3F ) ) )
+				result->append( 0x80.bit_or( ch.bit_and( 0x3F ) ) )
+			else:
+				result = throw(:bogus_character)
+			end if
+		end ch
+	end to_bytes
+end utf8
+
+object utf16le:
+	function name = "UTF-16LE"
+	object _pairbytes(seq):
+		# convert a sequence of bytes into a sequence of 16-bit integers,
+		# little-endian style
+		object iterate:
+			var _iter = seq.iterate
+			var current = :invalid
+			function is_valid = self._iter.is_valid
+			method next:
+				self->current = self._iter.current
+				self->_iter->next
+				self->current->bit_or( self._iter.current << 8 )
+			end next
+		end iterate
+	end _pairbytes
+	
+	function from_bytes(bytes):
+		result = ""
+		def units = self._pairbytes(bytes)
+		var char = :invalid
+		for unit in units:
+			if unit >= 0xD800 and unit <= 0xDBFF:
+				# This is the leading element in a surrogate pair.
+				# Copy its bits into the temporary char.
+				char = ((unit >> 6).bit_and( 0x001F ) + 1) << 16
+				char->bit_or( unit.bit_and( 0x003F ) << 10 )
+			else if unit >= 0xDC00 and unit <= 0xDFFF:
+				# Trailing element in a surrogate pair. Add its bits to the
+				# temporary char, then add to our output string.
+				char->bit_or( unit.bit_and( 0x03FF ) )
+				result->concatenate( _builtin_char_from_int( char ) )
+			else:
+				# This is not part of a surrogate pair.
+				result->concatenate( _builtin_char_from_int( unit ) )
+			end if
+		end unit
+	end from_bytes
+	function to_bytes(string):
+		import list from radian
+		result = list.blank
+		for ch in string:
+			if ch < 0 or ch > 0x10FFFF:
+				ch = 0xFFFD
+			end if
+			if ch < 0x00FFFF:
+				# Char lives in the BMP, stands for itself.
+				result->append( ch mod 256 )
+				result->append( (ch >> 8) mod 256 )
+			else:
+				# Char is non-BMP, so we must create a surrogate pair.
+				ch->subtract( 0x10000 )
+				def lopair = (ch >> 10).bit_and( 0x03FF ).bit_or( 0xD800 )
+				def hipair = ch.bit_and( 0x03FF ).bit_or( 0xDC00 )
+				result->append( lopair mod 256 )
+				result->append( (lopair >> 8) mod 256 )
+				result->append( hipair mod 256 )
+				result->append( (hipair >> 8) mod 256 )
+			end if
+		end ch
+	end to_bytes
+end utf16le
+
+object utf16be:
+	function name = "UTF-16BE"
+	
+	object _pairbytes(seq):
+		# convert a sequence of bytes into a sequence of 16-bit integers,
+		# big-endian style
+		object iterate:
+			var _iter = seq.iterate
+			var current = throw(:invalid)
+			function is_valid = self._iter.is_valid
+			method next:
+				self->current = self._iter.current << 8
+				self->_iter->next
+				self->current->bit_or( self._iter.current )
+			end next
+		end iterate
+	end _pairbytes
+	
+	function from_bytes(bytes):
+		result = ""
+		def units = self._pairbytes(bytes)
+		var char = :invalid
+		for unit in units:
+			if unit >= 0xD800 and unit <= 0xDBFF:
+				# This is the leading element in a surrogate pair.
+				# Copy its bits into the temporary char.
+				char = ((unit >> 6).bit_and( 0x001F ) + 1) << 16
+				char->bit_or( unit.bit_and( 0x003F ) << 10 )
+			else if unit >= 0xDC00 and unit <= 0xDFFF:
+				# Trailing element in a surrogate pair. Add its bits to the
+				# temporary char, then add to our output string.
+				char->bit_or( unit.bit_and( 0x03FF ) )
+				result->concatenate( _builtin_char_from_int( char ) )
+			else:
+				# This is not part of a surrogate pair.
+				result->concatenate( _builtin_char_from_int( unit ) )
+			end if
+		end unit
+	end from_bytes
+	function to_bytes(string):
+		import list from radian
+		result = list.blank
+		for ch in string:
+			if ch < 0 or ch > 0x10FFFF:
+				ch = 0xFFFD
+			end if
+			if ch < 0x00FFFF:
+				# Char lives in the BMP, stands for itself.
+				result->append( (ch >> 8) mod 256 )
+				result->append( ch mod 256 )
+			else:
+				# Char is non-BMP, so we must create a surrogate pair.
+				ch->subtract( 0x10000 )
+				def lopair = (ch >> 10).bit_and( 0x03FF ).bit_or( 0xD800 )
+				def hipair = ch.bit_and( 0x03FF ).bit_or( 0xDC00 )
+				result->append( (lopair >> 8) mod 256 )
+				result->append( lopair mod 256 )
+				result->append( (hipair >> 8) mod 256 )
+				result->append( hipair mod 256 )
+			end if
+		end ch
+	end to_bytes
+end utf16be
+

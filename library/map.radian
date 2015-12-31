@@ -1,0 +1,54 @@
+# library/map.radian: utilities for working with associative arrays
+#
+# Copyright 2012 Mars Saxman
+#
+# This software is provided 'as-is', without any express or implied warranty.
+# In no event will the authors be held liable for any damages arising from the
+# use of this software.
+#
+# Permission is granted to anyone to use this software for any purpose,
+# including commercial applications, and to alter it and redistribute it freely,
+# subject to the following restrictions:
+#
+# 1. The origin of this software must not be misrepresented; you must not claim
+# that you wrote the original software. If you use this software in a product,
+# an acknowledgment in the product documentation would be appreciated but is
+# not required.
+#
+# 2. Altered source versions must be plainly marked as such, and must not be
+# misrepresented as being the original software.
+#
+# 3. This notice may not be removed or altered from any source distribution.
+
+# it's awfully convenient for a map to also be a sequence, and our map
+# implementation does in fact provide a sequence and a size, but those methods
+# are not part of the map ADT.
+function type(obj):
+	result = obj has :lookup
+	result = result and obj has :insert
+	result = result and obj has :remove
+	result = result and obj has :assign
+	result = result and obj has :is_empty
+	result = result and obj has :contains
+end type
+
+def blank = _builtin_map_blank
+
+function from_pairs(sequence):
+	result = map.blank
+	for pair in sequence:
+		result->assign(pair[0], pair[1])
+	end pair
+end from_pairs
+
+function from_keys_and_values(keys, values):
+	result = map.blank
+	var key_iter = keys.iterate
+	var val_iter = values.iterate
+	while key_iter.is_valid or val_iter.is_valid:
+		result->assign(key_iter.current, val_iter.current)
+		key_iter->next
+		val_iter->next
+	end while
+end from_keys_and_values
+

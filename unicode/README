@@ -1,0 +1,11 @@
+Radian's compiler and standard library make use of the Unicode character
+definitions and some of its transformation algorithms. This directory contains
+the current working copies of the Unicode data files and some scripts for
+generating code or data files based on them.
+
+If you want to upgrade to a newer version of Unicode, download the relevant
+files, place them in this directory, then run the table generation scripts.
+Once you're done, you'll need to commit everything: this is not a regular part
+of the Radian build process, but something done on specific occasions. It should
+be logged in the CHANGES file.
+

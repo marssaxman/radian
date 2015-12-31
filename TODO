@@ -1,0 +1,127 @@
+KNOWN BUGS
+X	can reach module members without qualification, but they don't always work
+	defs in a module root cannot refer to module object; is this a bug?
+	horrible spew of bad indentation errors when block begin doesn't match end
+	foo.bar as statement generates unhelpful "expected a line break" error
+
+MUST HAVE
+X	symbol tree should be balanced, inserts should use mutex
+X	implement an iterator for the map structure
+X	print function should decompose characters into bytes using stdout encoding
+X	generator block to allow programmatic creation of sequences
+X	task block to allow asynchronous IO without unwieldy callback chains
+X	functions must validate argument count, return exceptions
+X	io system based on tasks
+X	runtime functions must all validate argc
+X	runtime functions should check args for exceptions & autofail
+X	io.print and io.write_file need to return some identifiable success code,
+		or at least not always return an exception under every circumstance
+X	load_external should accept file ref, not just a string literal path
+X	load_external should accept any string for symbol name, not just literal
+	some way to catch and recover from an exception (at sync time?)
+X	report a normal (located) error message when someone imports a nonexistent
+		module, instead of waiting until later in the build process
+	copy libffi files into radian repo, so we don't get hosed when someone stops
+		hosting an older version, or an older version of the LFS patch file
+X	number.truncate and friends should produce integers, even when input is a
+		float; they are precise representations
+	generated code should use global static vars for literals and not look them
+		up from scratch at every turn: symbols, numbers, and strings
+
+WOULD LIKE
+X	for-loop map extraction should skip the tuple when there is only one
+		extractable subexpression; just map to that subexpression instead
+X	for-loops should refrain from capturing context-independent values like
+		constants and import references
+	for-loops should not generate the operation function twice; this creates
+		needless backend churn and requires a second link name
+	rewrite runtime use of exceptions: should throw symbols, not strings
+		or maybe define some exception object: tuple of symbol & data...?
+	document exceptions which can be thrown by runtime functions
+X	multiline expressions
+X	io functions to read and write files
+	io functions to move, rename, and stat files
+	io function to iterate over contents of directory
+X	os-specific path editor functions for directory navigation
+X	create a set from a sequence
+X	create a map from two sequences, or from a sequence of pairs
+X	rational arithmetic
+	arbitrary precision arithmetic
+X	map object should know how many elements it contains
+	map should let you specify a comparator
+	map should let you specify a default return value
+	'character' module to do unicode character transformations
+X	built in way to do string comparisons
+X	function to do sequence comparisons too?
+X	associative containers should implement 'contains' query method
+X	make private identifiers actually private (inaccessible outside module)
+X	inheritance of existing object implementations
+X	module self-identifier should be the module's name instead of "self"
+X	automatically extract induction variables as mapping sequence in for-loops
+	strings:
+X		get substring
+X		compute length
+		compare (with locale?)
+		find (with locale?) - regex
+X		convert to uppercase
+X		convert to lowercase
+X		case insensitive folding
+		convert to normalized unicode forms: D, C, KD, KC 
+X	better error message when modifying 'self' inside a function: explain that
+		self is only mutable inside a method, not a function
+	multilevel imports: allow import from foo.bar.baz, not just foo
+	ffi module should have 'pointer' or 'buffer' type
+X	friendlier error if you accidentally use the mutator arrow in an expression
+	shared/static vars, STM across task actions
+	throw could be a statement, which would insta-pollute the assert chain	
+	it's really annoying that you can't assign to a list element via subscript	
+
+MAYBE SOMEDAY
+X	destructuring assignment to a tuple or an array
+	allow destructuring assignment during var/const declaration
+	ref parameters (assignable, use C# style)
+	interface feature which tests objects to see if they support some methods
+	some way of identifying and distinguishing atoms
+	rewrite the IO engine to use the parallelization engine
+	binary installer for each supported platform
+/	more container types:
+X		stack
+X		queue
+		deque
+X		set
+		heap
+	design some kind of module package system thingie
+	input function should respect terminal encoding instead of assuming UTF-8
+	refer to object and module identifiers without needing explicit "self"
+	allow a module named "object" for object utilities
+X	switch the convention for private members from 'mFoo' to '_foo'
+	regular expression literals
+	functions written in radian code should autofail on exception args, too,
+		maybe, but this might be an unpleasant amount of overhead
+
+	think about the library naming convention:
+		currently uses C++ style names_with_underscores
+		this is a lot of underscores
+		better to use camelCaseNames or PascalCaseNames?
+
+LIBRARY
+	regex - support posix grep language, implement UTS-18 level 2
+	json - parse to map/array/number/string, emit from same
+	character - provide sets for unicode character properties
+	string - substring, find, case folding, normalization, collation
+	locale - language code, time zone, currency symbol, etc
+	number - parse from string in various formats
+X	math - sin, cos, tan, atan, atan2, sqrt, exp, etc
+	system - file path parse/manipulate, get specific directories
+	iostream - tools for reading from & writing to IO streams
+	command args - parse args, options, etc; also something like fileinput
+	filesystem - open files, navigate dirs, create, delete, move, stat, etc
+	datetime - read, write & manipulate dates & times, those messy abstractions
+
+
+also, in general -
+	documentation
+	test suite
+	example programs
+	debugging tools
+

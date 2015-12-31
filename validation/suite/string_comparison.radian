@@ -1,0 +1,15 @@
+# make sure string comparisons work like they should
+# test comparison of literals and of compound strings, since they have
+# different implementations internally
+
+assert "foo" = "foo"
+assert "foo" != "bar"
+assert "foo" > "bar"
+assert "foo" < "food"
+assert "food" > "foo"
+assert "foo" > "fon"
+
+assert "fo" & "o" > "b" & "ar"
+assert "b" & "oomtown" > "b" & "og"
+assert "b" & "oomtown" > "bo" & "g"
+

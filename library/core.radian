@@ -1,0 +1,118 @@
+# Copyright 2009-2012 Mars Saxman
+#
+# This software is provided 'as-is', without any express or implied warranty.
+# In no event will the authors be held liable for any damages arising from the
+# use of this software.
+#
+# Permission is granted to anyone to use this software for any purpose,
+# including commercial applications, and to alter it and redistribute it freely,
+# subject to the following restrictions:
+#
+# 1. The origin of this software must not be misrepresented; you must not claim
+# that you wrote the original software. If you use this software in a product,
+# an acknowledgment in the product documentation would be appreciated but is
+# not required.
+#
+# 2. Altered source versions must be plainly marked as such, and must not be
+# misrepresented as being the original software.
+#
+# 3. This notice may not be removed or altered from any source distribution.
+
+
+# Core support functions
+# Anything the compiler has intrinsic knowledge of must live here.
+
+import sequence from radian
+
+# The built in list comprehension syntax needs to apply maps and filters to
+# sequences. There is a perfectly serviceable implementation for each of these
+# operations in the sequence library, so we will just include them.
+function filter(seq, predicate):
+	result = sequence.filter(seq, predicate)
+end filter
+
+function map(seq, output):
+	result = sequence.map(seq, output)
+end map
+
+
+# The yield/async/generator system needs to connect a series of values using
+# standard iterator objects. These support functions do the work.
+
+object make_iterator(value, next_func):
+	function current = value
+	function is_valid = true
+	function next = invoke(next_func: value)
+end make_iterator
+
+function make_subsequence(sub_iter, next_func):
+	object concaterator(iter):
+		var _iter = iter
+		function is_valid = self._iter.is_valid
+		function current = self._iter.current
+		method next:
+			self->_iter->next
+			if not self.is_valid:
+				self = invoke(next_func: self._iter.current)
+			end if
+		end next
+	end concaterator
+	if sub_iter.is_valid:
+		result = concaterator(sub_iter)
+	else:
+		result = invoke(next_func: sub_iter.current)
+	end if
+end make_subsequence
+
+# The sync operator, also an asynchronous block composition mechanism, connects
+# a series of actions forming a task.
+
+object make_action(value, next):
+	function is_running = true
+	function response = value
+	function send(value) = invoke(next: value)
+end make_action
+
+# Given an action and a continuation, attach the result of the continuation to
+# the end of the action chain. That is, execute actions until the task is no
+# longer running, then call the continuation and return its action.
+function make_subtask(sub_action, next_func):
+	object concaction(action):
+		var _action = action
+		function is_running = true
+		function response = self._action.response
+		method send(value):
+			if self._action.is_running:
+				self->_action->send(value)
+				value = self._action.response
+			end if
+			if not self._action.is_running:
+				self = invoke(next_func: value)
+			end if
+		end send
+	end concaction
+	result = concaction(sub_action)
+end make_subtask
+
+# The current compiler architecture does not give us an opportunity to know
+# whether we need a terminator for a sequence or a task, so we'll create an
+# object which can play either role.
+object make_terminator(value):
+	# methods that make this a terminal iterator
+	function current = value
+	function is_valid = false
+	function next = throw(:not_valid)
+	# methods which also make it a terminal action
+	function response = value
+	function is_running = false
+	function send(value) = throw(:not_running)
+end make_terminator
+
+object make_seq_or_task(iterator):
+	function iterate = iterator
+	function start = iterator
+end make_seq_or_task
+
+
+
+

@@ -1,0 +1,20 @@
+# does the library stack object work?
+import stack from radian
+import list from radian
+var flort = stack.blank
+flort->push("ONE!!!")
+flort->push("TWO!!!!")
+flort->push("THREE!!!!!")
+flort->push("eh, four")
+var out = list.blank
+while not flort.is_empty:
+	out->append( flort.head )
+	flort->pop
+end while
+
+assert out.size = 4
+assert out[0] = "eh, four"
+assert out[1] = "THREE!!!!!"
+assert out[2] = "TWO!!!!"
+assert out[3] = "ONE!!!"
+

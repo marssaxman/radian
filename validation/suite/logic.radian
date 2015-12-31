@@ -1,0 +1,13 @@
+# Test out boolean logic
+# We'll just make a bunch of assertions that things work the way we expect.
+assert true
+assert true and true
+assert true or true
+assert not( true xor true )
+assert not false
+assert not( true and false )
+assert true or false
+assert true xor false
+assert not( false and false )
+assert not( false or false )
+assert not( false xor false )

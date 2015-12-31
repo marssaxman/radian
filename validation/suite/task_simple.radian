@@ -1,0 +1,23 @@
+import task from radian
+import string from radian
+
+# Create a single-step task that returns the value 42.
+var plurf = task.from_value(42)
+# Execute this task; it has only one action so it will complete immediately.
+plurf->start
+assert not plurf.is_running
+assert plurf.response = 42
+
+# A two-step task, which acts like a simple generator.
+function emit_pair(x, y):
+	sync task.from_value(x)
+	result = y
+end emit_pair
+plurf = emit_pair(5, 10)
+plurf->start
+assert plurf.is_running
+assert plurf.response = 5
+plurf->send(0)
+assert not plurf.is_running
+assert plurf.response = 10
+

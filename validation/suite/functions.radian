@@ -1,0 +1,60 @@
+# Functions are the fundamental unit of program structure.
+
+# A function accepts some value, performs a computation, and returns a value.
+function increment(x) = x + 1
+assert increment(1) = 2
+
+# A function's parameter may be a tuple, combining multiple values.
+function sum(x, y) = x + y
+assert sum(1, 3) = 4
+
+# A function's result may also be a tuple.
+function various(x) = x * 1, x * 2, x * 3
+assert various(4)[0] = 4
+assert various(19)[1] = 38
+assert various(3)[2] = 9
+
+# Functions may call other functions.
+function sumincrement(x, y) = increment(x) + increment(y)
+assert sumincrement(5, 6) = 13
+
+# A function may perform its computation inside a scope block.
+function longincrement(x):
+	# The function specifies its result by assigning to the implicit 
+	# variable "result".
+	result = increment(x)
+end longincrement
+assert longincrement(44) = 45
+
+# Functions are first-class objects; that is, a function is a value.
+function apply(value, formula) = invoke(formula: value)
+assert apply(50, capture(x: longincrement(x))) = 51
+
+# Function scope blocks can contain other functions.
+function outer(x):
+	function inner(z):
+		result = longincrement(z)
+	end inner
+	result = apply(x, capture(x: inner(x)))
+end outer
+assert outer(1) = 2
+
+# Inner function parameters shadow outer function parameters.
+function outer2(x, y):
+	function inner2(y, x) = y - x
+	result = inner2(x, y)
+end outer2
+assert outer2(4, 3) = 1
+
+# Inner functions can capture values defined in outer functions.
+function outer3(x, y):
+	var sum = x + y
+	function inner3(factor) = sum * factor
+	result = capture(x: inner3(x))
+end outer3
+var factorizer = outer3(2, 3)
+assert invoke(factorizer: 1) = 5
+assert invoke(factorizer: 2) = 10
+
+
+

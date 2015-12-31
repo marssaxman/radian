@@ -1,0 +1,35 @@
+#!/usr/bin/env radian
+
+# The compiler extracts induction variables from for-loops and applies them as
+# a map over the input sequence. The results are slightly different depending
+# on whether there are zero, one, or many non-prime induction variables in a
+# given loop. This test exercises each path, containing one loop of each type.
+
+import string from radian
+import number from radian
+import map from radian
+
+# This loop has no extractable subexpressions.
+var sum = 0
+for i in number.range(1, 10):
+	sum->add(i)
+end i
+assert sum = 55
+
+# This loop has one extractable subexpression.
+var foo = ""
+for i in number.range(1, 10):
+	foo = foo & " " & string.decimal(i)
+end i
+assert foo = " 1 2 3 4 5 6 7 8 9 10"
+
+# This loop has two extractable subexpressions.
+var blurb = map.blank
+for pair in (("foo",1), ("bar", 2), ("baz", 3)):
+	blurb->assign(pair[0], pair[1])
+end pair
+assert blurb.size = 3
+assert blurb["foo"] = 1
+assert blurb["bar"] = 2
+assert blurb["baz"] = 3
+

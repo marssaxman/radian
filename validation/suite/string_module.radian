@@ -1,0 +1,52 @@
+# test out the functions in the string module
+
+import string from radian
+import sequence from radian
+import relation from radian
+
+# Make sure the concatenation-with-delimiter function works
+def tubble = "foo", "bar", "baz"
+var terp = string.join_with(tubble, ",")
+assert relation.is_equal(sequence.compare(terp, "foo,bar,baz"))
+
+# make sure the non-delimiterized version works too
+terp = string.join(tubble)
+assert relation.is_equal(sequence.compare(terp, "foobarbaz"))
+
+# Break the string into lines and make sure we get the right number. Make sure
+# all the documented line-ending conventions work.
+var multilines = string.join_with(tubble, "\n")
+var resplit = string.split_lines(multilines)
+assert relation.is_equal(sequence.compare(resplit, tubble))
+multilines = string.join_with(tubble, "\r")
+resplit = string.split_lines(multilines)
+assert relation.is_equal(sequence.compare(resplit, tubble))
+multilines = string.join_with(tubble, "\r\n")
+resplit = string.split_lines(multilines)
+assert relation.is_equal(sequence.compare(resplit, tubble))
+
+# Run the sequence-wrappers that get substrings
+assert "head" = string.take("head of the string", 4)
+assert "string" = string.drop( "substring", 3 )
+assert "bar" = string.slice("foobarbaz", 3, 3)
+assert "om" = string.slice("your" & " " & "momma", 6, 2)
+assert "xxxoooo" = string.replicate("x", 3) & string.replicate("o", 4)
+
+# Try some case foldings to make sure we get the expected answers
+assert "FOO" = string.to_upper("foo")
+assert "FOO" = string.to_upper("Foo")
+assert "foo" = string.to_lower("Foo")
+assert "foo" = string.to_lower("FOO")
+assert "bork123" = string.to_lower("Bork123")
+assert "\u1f0c\u0399" = string.to_upper("\u1f8c")
+assert string.fold_case("Foo") = string.fold_case("fOO")
+assert string.fold_case("42") = string.fold_case("42")
+assert string.fold_case("Lizard BEANS") = string.fold_case("lIzArD bEaNS")
+
+# Format integers as strings in various bases
+assert string.decimal(0) = "0"
+assert string.decimal(-0) = "0"
+assert string.decimal(42) = "42"
+assert string.decimal(100/3) = "33"
+assert string.decimal(-9490) = "-9490"
+

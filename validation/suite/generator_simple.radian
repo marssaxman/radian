@@ -1,0 +1,29 @@
+# let's try some games with asynchrony
+
+def douper_bonzo = "megatron"
+def douper_blumpkin = ["trunk", "branch"]
+
+import sequence from radian
+function goopsy:
+	import string from radian
+	var spicklement = 1
+	yield "one"
+	yield from sequence.blank
+	spicklement = spicklement + 1
+	yield douper_bonzo
+	spicklement = spicklement + 1
+	if spicklement > 0:
+		yield "flaps"
+		spicklement->add(1)
+	else:
+		yield "fail!!!"
+	end if
+	yield from douper_blumpkin
+	yield "total: " & string.decimal(spicklement)
+end goopsy
+
+import relation from radian
+var expected = ["one", "megatron", "flaps", "trunk", "branch", "total: 4"]
+var rel = sequence.compare(goopsy, expected)
+assert relation.is_equal(rel)
+

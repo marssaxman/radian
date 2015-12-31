@@ -1,0 +1,85 @@
+#!/usr/bin/env radian
+
+# see if the list object does what it is supposed to
+import list from radian
+var squarp = list.blank
+assert squarp.is_empty
+squarp->append("fee")
+squarp->append("fie")
+squarp->append("foe")
+squarp->append("fum")
+assert squarp.size = 4
+assert squarp.head = "fee"
+assert squarp.tail = "fum"
+assert squarp[0] = "fee"
+assert squarp[1] = "fie"
+assert squarp[2] = "foe"
+assert squarp[3] = "fum"
+squarp->reverse
+squarp->push("elephant")
+assert squarp.tail = "fee"
+assert squarp.size = 5
+assert squarp[0] = "elephant"
+assert squarp[1] = "fum"
+assert squarp[2] = "foe"
+assert squarp[3] = "fie"
+assert squarp[4] = "fee"
+
+
+# let's concatenate a couple of lists and make sure they do the right thing
+var leftside = ["a", "b", "c", "d", "e", "f", "g"]
+var rightside = ["h", "i", "j", "k", "l", "m", "n"]
+assert leftside.size = 7
+assert rightside.size = 7
+var catted = leftside & rightside
+assert catted.size = 14
+assert catted[1] = "b"
+assert catted[12] = "m"
+assert catted.head = "a"
+assert catted.tail = "n"
+catted->reverse
+assert catted.tail = "a"
+assert catted[1] = "m"
+assert catted[12] = "b"
+assert catted.head = "n"
+catted = leftside.reverse & rightside
+assert catted.size = 14
+assert catted[1] = "f"
+assert catted.head = "g"
+assert catted[12] = "m"
+assert catted.tail = "n"
+
+# make sure we can create a single-item list and return values from it
+var mono = [42]
+assert mono[0] = 42
+assert mono.size = 1
+assert mono.pop.is_empty
+assert mono.chop.is_empty
+assert mono.reverse[0] = 42
+
+# make lists of various lengths by repeated append, make sure they match the
+# input sequences
+function make_list_and_check(seq):
+	var list = [0].pop
+	var size = 0
+	for item in seq:
+		list->append(item)
+		size->add(1)
+	end item
+	result = list.size = size
+	assert result
+	var index = 0
+	for item in seq:
+		assert list[index] = item
+		index->add(1)
+	end item
+end make_list_and_check
+
+import number from radian
+var seq = number.range(0,1000)
+var iter = seq.iterate
+while iter.is_valid:
+	var i = iter.current
+	assert make_list_and_check(number.range(0,i))
+	iter->next
+end while

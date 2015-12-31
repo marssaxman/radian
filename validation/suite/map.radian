@@ -1,0 +1,27 @@
+#!/usr/bin/env radian
+
+import sequence from radian
+import relation from radian
+
+# see if the map object does what it is supposed to
+import map from radian
+var squarp = map.blank
+squarp->assign(1, "1")
+squarp->assign(2, "2")
+squarp->assign(3, "3")
+assert squarp.contains(3)
+assert squarp.size = 3
+assert squarp[3] = "3"
+assert squarp.contains(3)
+
+var conker = {"foo" => 42, "bar" => 69, "qux" => 13}
+assert conker.size = 3
+assert conker["foo"] = 42
+conker->assign("baz", 100)
+assert conker["baz"] = 100
+assert conker.size = 4
+
+def slup = (69, 100, 42, 13)
+var vals = each item[1] from item in conker
+var rel = sequence.compare(vals, slup)
+assert relation.is_equal(rel)

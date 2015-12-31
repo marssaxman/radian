@@ -1,0 +1,49 @@
+vocabulary for the support library:
+
+	lookup(index)           # retrieves a value
+	assign(index, value)    # replace the value at some index
+	is_empty                # does it contain any elements?
+	size                    # how many elements does it contain?
+	iterate                 # return an iterator
+	insert(index, value)	# insert a new value at the specified index
+	remove(index)	        # remove whatever lives at this index
+	tail                    # value of last element in list
+	append(value)           # insert new tail
+	chop                    # remove tail
+	head                    # value of element zero
+	push(value)             # insert new head
+	pop                     # remove head
+	partition(index)        # split container in half at given index
+	concatenate(list)       # add values contained in list to end of this list
+	add(value)              # insert a new value into an ordered container
+	contains(index)			# true if container has a value for that index
+
+interfaces:
+	sequence: (iterate)
+	container: sequence + (size + is_empty)
+	collection: container + (lookup, insert, remove, contains)
+	queue: (append, head, pop)
+	stack: (push, head, pop)
+	deque: queue + stack + (append)
+	list: collection + deque + (assign)
+	map: collection
+	set: container + (lookup, remove, add, contains)
+	tuple: container + (lookup, contains)
+	
+Three mutable containers, offering O(log n) lookup, add/insert, and remove:
+
+[foo, bar, baz] creates a list, using a finger tree
+
+{foo => bar, baz => quux} creates a map, using an AA-tree
+
+{foo, bar, baz} creates a set, also using an AA-tree
+
+API POLICY: 
+- All methods must run in less than linear time
+- It must be impossible to implement a method efficiently outside the object
+
+Methods which are useful but which can be implemented just as efficiently
+outside the object, using its primitive ADT operations, must be implemented in
+a support library and not in the object interface itself. The convention is
+that methods for one of these interfaces will live in a module named after
+that interface. This is a class-like pattern.

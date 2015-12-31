@@ -1,0 +1,236 @@
+# library/ffi.radian: utilities for working with foreign functions
+#
+# Copyright 2011 Mars Saxman
+#
+# This software is provided 'as-is', without any express or implied warranty.
+# In no event will the authors be held liable for any damages arising from the
+# use of this software.
+#
+# Permission is granted to anyone to use this software for any purpose,
+# including commercial applications, and to alter it and redistribute it freely,
+# subject to the following restrictions:
+#
+# 1. The origin of this software must not be misrepresented; you must not claim
+# that you wrote the original software. If you use this software in a product,
+# an acknowledgment in the product documentation would be appreciated but is
+# not required.
+#
+# 2. Altered source versions must be plainly marked as such, and must not be
+# misrepresented as being the original software.
+#
+# 3. This notice may not be removed or altered from any source distribution.
+
+import list from radian
+import string from radian
+
+function load_external(lib, name):
+	result = _builtin_ffi_load_external(lib, name)
+end load_external
+
+function describe_function(ptr, argtypes, resulttype):
+	result = _builtin_ffi_describe_function(ptr, argtypes, resulttype)
+end describe_function
+
+function call(ptr, args):
+	result = _builtin_ffi_call(ptr, args)
+end call
+
+# An FFI object is one which can convert a value to bytes and back again,
+# and which has a 'ctype' tag allowing the FFI library to identify the
+# corresponding C datatype.
+function type(obj):
+	result = obj has :from_bytes and obj has :to_bytes and obj has :ctype
+end type
+
+object void:
+	function ctype = :void
+	function byte_size(val) = 0
+end void
+
+object uint64:
+	function ctype = :uint64
+	function byte_size(val) = 8
+	function from_bytes(bytes):
+		result = bytes[0]
+		result->bit_or( bytes[1] << 8 )
+		result->bit_or( bytes[2] << 16 )
+		result->bit_or( bytes[3] << 24 )
+		result->bit_or( bytes[4] << 32 )
+		result->bit_or( bytes[5] << 40 )
+		result->bit_or( bytes[6] << 48 )
+		result->bit_or( bytes[7] << 56 )
+	end from_bytes
+	function to_bytes(number):
+		var byte0 = number mod 256
+		number->shift_right( 8 )
+ 		var byte1 = number mod 256
+		number->shift_right( 8 )
+		var byte2 = number mod 256
+		number->shift_right( 8 )
+		var byte3 = number mod 256
+		number->shift_right( 8 )
+		var byte4 = number mod 256
+		number->shift_right( 8 )
+		var byte5 = number mod 256
+		number->shift_right( 8 )
+		var byte6 = number mod 256
+		number->shift_right( 8 )
+		var byte7 = number mod 256
+		result = byte0, byte1, byte2, byte3, byte4, byte5, byte6, byte7
+	end to_bytes
+end uint64
+
+object int64:
+	function ctype = :int64
+	function byte_size(val) = 8
+	function from_bytes(bytes):
+		result = bytes[0]
+		result->bit_or( bytes[1] << 8 )
+		result->bit_or( bytes[2] << 16 )
+		result->bit_or( bytes[3] << 24 )
+		result->bit_or( bytes[4] << 32 )
+		result->bit_or( bytes[5] << 40 )
+		result->bit_or( bytes[6] << 48 )
+		result->bit_or( bytes[7] << 56 )
+		if result.bit_and( 0x8000000000000000 ) = 0x8000000000000000:
+			result->subtract( 0x10000000000000000 )
+		end if
+	end from_bytes
+	function to_bytes(number):
+		var byte0 = number mod 256
+		number->shift_right( 8 )
+		var byte1 = number mod 256
+		number->shift_right( 8 )
+		var byte2 = number mod 256
+		number->shift_right( 8 )
+		var byte3 = number mod 256
+		number->shift_right( 8 )
+		var byte4 = number mod 256
+		number->shift_right( 8 )
+		var byte5 = number mod 256
+		number->shift_right( 8 )
+		var byte6 = number mod 256
+		number->shift_right( 8 )
+		var byte7 = number mod 256
+		result = byte0, byte1, byte2, byte3, byte4, byte5, byte6, byte7
+	end to_bytes
+end int64
+
+object uint32:
+	function ctype = :uint32
+	function byte_size(val) = 4
+	function from_bytes(bytes):
+		result = bytes[0]
+		result->bit_or( bytes[1] << 8 )
+		result->bit_or( bytes[2] << 16 )
+		result->bit_or( bytes[3] << 24 )
+	end from_bytes
+	function to_bytes(number):
+		var byte0 = number mod 256
+		number->shift_right( 8 )
+		var byte1 = number mod 256
+		number->shift_right( 8 )
+		var byte2 = number mod 256
+		number->shift_right( 8 )
+		var byte3 = number mod 256
+		result = byte0, byte1, byte2, byte3
+	end to_bytes
+end uint32
+
+object int32:
+	function ctype = :int32
+	function byte_size(val) = 4
+	function from_bytes(bytes):
+		result = bytes[0]
+		result->bit_or( bytes[1] << 8 )
+		result->bit_or( bytes[2] << 16 )
+		result->bit_or( bytes[3] << 24 )
+		if result.bit_and( 0x80000000 ) = 0x80000000:
+			result->subtract( 0x100000000 )
+		end if
+	end from_bytes
+	function to_bytes(number):
+		var byte0 = number mod 256
+		number->shift_right( 8 )
+		var byte1 = number mod 256
+		number->shift_right( 8 )
+		var byte2 = number mod 256
+		number->shift_right( 8 )
+		var byte3 = number mod 256
+		result = byte0, byte1, byte2, byte3
+	end to_bytes
+end int32
+
+object uint16:
+	function ctype = :uint16
+	function byte_size(val) = 2
+	function from_bytes(bytes):
+		result = bytes[0].bit_or( bytes[1] << 8 )
+	end from_bytes
+	function to_bytes(number):
+		var byte0 = number mod 256
+		number->shift_right( 8 )
+		var byte1 = number mod 256
+		result = byte0, byte1
+	end to_bytes
+end uint16
+
+object int16:
+	function ctype = :int16
+	function byte_size(val) = 2
+	function from_bytes(bytes):
+		result = bytes[0].bit_or( bytes[1] << 8 )
+		if result.bit_and( 0x8000 ) = 0x8000:
+			result->subtract( 0x10000 )
+		end if
+	end from_bytes
+	function to_bytes(number):
+		var byte0 = number mod 256
+		number->shift_right( 8 )
+		var byte1 = number mod 256
+		result = byte0, byte1
+	end to_bytes
+end int16
+
+object uint8:
+	function ctype = :uint8
+	function byte_size(val) = 1
+	function from_bytes(bytes):
+		result = bytes[0]
+	end from_bytes
+	function to_bytes(number):
+		result = [number mod 256]
+	end to_bytes
+end uint8
+
+object int8:
+	function ctype = :int8
+	function byte_size(val) = 1
+	function from_bytes(bytes):
+		result = bytes[0]
+		if result.bit_and( 0x80 ) = 0x80:
+			result->subtract( 0x100 )
+		end if
+	end from_bytes
+	function to_bytes(number):
+		result = [number mod 256]
+	end to_bytes
+end int8
+
+object bool:
+	function ctype = :uint8
+	function byte_size(val) = 1
+	function from_bytes(bytes):
+		result = true if bytes[0] != 0 else false
+	end from_bytes
+	function to_bytes(bool):
+		result = [0xff if bool else 0]
+	end to_bytes
+end bool
+
+object string(encoding):
+	function ctype = :pointer
+	function from_bytes(bytes) = encoding.from_bytes(bytes)
+	function to_bytes(string) = encoding.to_bytes(string)
+end ascii
+

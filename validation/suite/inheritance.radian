@@ -1,0 +1,14 @@
+# testing object inheritance
+object souper:
+	def flux = 42
+	def bonzo = "hello, good lookin'"
+	def blumpkin = ["eenie", "meenie", "minie"]
+end souper
+
+object douper from souper:
+	def bingle = 99
+end douper
+
+assert douper.flux = 42
+assert douper.bingle = 99
+

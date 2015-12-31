@@ -1,0 +1,218 @@
+# library/string.radian: functions for working with sequences of characters.
+#
+# Copyright 2009-2013 Mars Saxman
+#
+# This software is provided 'as-is', without any express or implied warranty.
+# In no event will the authors be held liable for any damages arising from the
+# use of this software.
+#
+# Permission is granted to anyone to use this software for any purpose,
+# including commercial applications, and to alter it and redistribute it freely,
+# subject to the following restrictions:
+#
+# 1. The origin of this software must not be misrepresented; you must not claim
+# that you wrote the original software. If you use this software in a product,
+# an acknowledgment in the product documentation would be appreciated but is
+# not required.
+#
+# 2. Altered source versions must be plainly marked as such, and must not be
+# misrepresented as being the original software.
+#
+# 3. This notice may not be removed or altered from any source distribution.
+
+function type(val):
+	result = val has :iterate
+	result = result and val has :compare_to
+	result = result and val has :concatenate
+end type
+
+function blank = ""
+
+function from_integer(value, base):
+	import number from radian
+	assert base >= 2 and base <= 36
+	function digit(x):
+		result = _builtin_char_from_int(x + (0x30 if x < 10 else 0x37))
+	end digit
+	def sign = "" if value >= 0 else "-"
+	result = ""
+	var quotient = number.absolute(number.truncate(value))
+	var done = false
+	while not done:
+		result = digit(quotient mod base) & result
+		quotient = number.truncate( quotient / base )
+		done = quotient = 0
+	end while
+	result = sign & result
+end from_integer
+
+# for the time being these formatters only deal with integers
+function decimal(number) = string.from_integer(number, 10)
+function hex(number) = string.from_integer(number, 16)
+function binary(number) = string.from_integer(number, 2)
+function octal(number) =  string.from_integer(number, 8)
+
+# decimal number formatter, for non-integers: prints the number with a decimal
+# point and the specified number of fractional digits.
+function from_number(value, precision):
+	import number from radian
+	def int_part = number.truncate( value )
+	def frac_part = number.absolute( int_part - value )
+	result = string.decimal(int_part)
+	result->concatenate(".")
+	def frac_val = frac_part * 10 ** precision
+	result->concatenate(string.decimal(frac_val))
+end from_number
+
+# if you have a stream of codepoints, this makes it act like a string
+object from_sequence(seq) from seq:
+	import sequence from radian
+	function compare_to(other) = sequence.compare(self, other)
+	function concatenate(other):
+		result = string.from_sequence(sequence.concatenate(self, other))
+	end concatenate
+end from_sequence
+
+# Make a single-char string. Of course you could also do this with a simple
+# object definition but calling the C runtime support code like this enables
+# space-efficient concatenation behavior.
+function from_codepoint(int) = _builtin_char_from_int(int)
+
+# concatenate a whole series of strings in constant time
+function join(strings):
+	function join_seq:
+		for str in strings:
+			yield from str
+		end str
+	end join_seq
+	result = string.from_sequence(join_seq)
+end join
+
+# concatenate some strings with a joining substring interposed between each
+# pair; the joint will not be appended to the sequence, but only inserted
+# between existing pairs.
+function join_with(strings, joint):
+	function join_seq:
+		var between = false
+		for str in strings:
+			if between:
+				yield from joint
+			end if
+			between = true
+			yield from str
+		end str
+	end join_seq
+	result = string.from_sequence(join_seq)
+end join_with
+
+# given a string containing multiple lines, split it on those linebreaks.
+# transparently respects all three linebreak conventions, even when mixed.
+function split_lines(str):
+	def LF = 10
+	def CR = 13
+	var output = ""
+	var previous_CR = false
+	for char in str:
+		var is_line = false
+		var is_data = false
+
+		if char = LF:
+			# Line feed is a line break on its own, as in the Unix convention,
+			# but it may also be the trailing half of a CR-LF pair, as in the
+			# Windows convention.
+			is_line = true
+			previous_CR = false
+		else if previous_CR:
+			# The old Mac OS convention was to use a CR on its own, with no LF.
+			# If the last char was a CR, and this char is not an LF, we'll
+			# belatedly emit the last line we found, then add this char to the
+			# beginning of the next string.
+			is_line = true
+			is_data = true
+			previous_CR = false
+		else if char = CR:
+			# This is a carriage return, but we don't yet know whether it is a
+			# classic-Mac style linebreak or the beginning of a Windows-style
+			# CRLF pair. We will simply remember that we found it and continue,
+			# deciding what to do when we see the next character.. 
+			previous_CR = true
+		else:
+			is_data = true
+		end if
+
+		if is_line:
+			yield output
+			output = ""
+		end if
+		if is_data:
+			output = output & string.from_codepoint( char )
+		end if
+
+	end char
+
+	# There might be some chars on the last line with no last terminator.
+	# If so, emit them as their own line. We won't do this unless there are
+	# trailing bytes, though, since we'd othewmise append a blank line onto
+	# the end of a normal file.
+	if output.iterate.is_valid:
+		yield output
+	end if
+end split_lines
+
+function replicate(str, length):
+	function replicator(str, length):
+		while length > 0:
+			yield from str
+			length = length - 1
+		end while
+	end replicator
+	result = string.from_sequence(replicator(str, length))
+end replicate
+
+# Unicode transformations, derived from the Unicode data files by the scripts
+# in radian/unicode
+function _unicode_transform(str, map):
+	# The map points from codepoints to strings. One input char may produce
+	# multiple output chars, depending on the specific mapping.
+	function proc(str):
+		for char in str:
+			if map.contains(char):
+				yield from map[char]
+			else:
+				yield char
+			end if
+		end char
+	end proc
+	result = string.from_sequence(proc(str))
+end _unicode_transform
+
+function to_upper(str):
+	import _uppermap from radian
+	result = string._unicode_transform(str, _uppermap.table)
+end to_upper
+
+function to_lower(str):
+	import _lowermap from radian
+	result = string._unicode_transform(str, _lowermap.table)
+end to_lower
+
+function fold_case(str):
+	import _foldcasemap from radian
+	result = string._unicode_transform(str, _foldcasemap.table)
+end fold_case
+	
+
+# Most things you might want to do to sequences are also useful with strings,
+# so we'll offer type-preserving wrappers for the sequence utilities. If you
+# just used the sequence utilities directly, you'd get sequences of chars which
+# have forgotten they are supposed to be strings - they'd have no comparison or
+# concatenation methods.
+import sequence from radian
+function take(str, N) = string.from_sequence(sequence.take(str, N))
+function drop(str, N) = string.from_sequence(sequence.drop(str, N))
+function length(str) = sequence.length(str)
+function is_empty(str) = sequence.is_empty(str)
+function slice(str, skip, length):
+	var chars = sequence.take(sequence.drop(str, skip), length)
+	result = string.from_sequence(chars)
+end slice

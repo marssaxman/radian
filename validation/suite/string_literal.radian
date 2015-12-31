@@ -1,0 +1,25 @@
+# make sure all the weird things you can do in string literals work
+
+function charpoint(str):
+	var iter = str.iterate
+	assert iter.is_valid
+	result = iter.current
+	iter->next
+	assert not iter.is_valid
+end charpoint
+
+assert charpoint("\\") = 0x005C
+assert charpoint("\'") = 0x0027
+assert charpoint("\"") = 0x0022
+assert charpoint("\a") = 0x0007
+assert charpoint("\b") = 0x0008
+assert charpoint("\f") = 0x000c
+assert charpoint("\n") = 0x000A
+assert charpoint("\r") = 0x000D
+assert charpoint("\t") = 0x0009
+assert charpoint("\v") = 0x000b
+assert charpoint("\x65") = 0x0065
+assert "\x41" = "A"
+assert "\u0041" = "A"
+assert "\U000041" = "A"
+

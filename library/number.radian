@@ -1,0 +1,86 @@
+# library/number.radian: functions for working with numbers
+#
+# Copyright 2010-2013 Mars Saxman
+#
+# This software is provided 'as-is', without any express or implied warranty.
+# In no event will the authors be held liable for any damages arising from the
+# use of this software.
+#
+# Permission is granted to anyone to use this software for any purpose,
+# including commercial applications, and to alter it and redistribute it freely,
+# subject to the following restrictions:
+#
+# 1. The origin of this software must not be misrepresented; you must not claim
+# that you wrote the original software. If you use this software in a product,
+# an acknowledgment in the product documentation would be appreciated but is
+# not required.
+#
+# 2. Altered source versions must be plainly marked as such, and must not be
+# misrepresented as being the original software.
+#
+# 3. This notice may not be removed or altered from any source distribution.
+
+object range_with_step(min, max, step):
+	object iterate:
+		var current = min
+		function is_valid:
+			if step > 0:
+				result = self.current <= max
+			else:
+				result = self.current >= max
+			end if
+		end is_valid
+		method next:
+			assert self.is_valid
+			self->current = self.current + step
+		end next
+	end iterate
+end range_with_step
+
+function range(min, max):
+	result = number.range_with_step(min, max, 1)
+end range
+
+function sign(val):
+	# Return the unit number carrying the value's sign.
+	def relation = val.compare_to(0)
+	result = invoke(relation: -1, 0, 1)
+end sign
+
+function floor(val):
+	# Round down to the nearest integer toward negative infinity.
+	if val.is_rational:
+		var nudge = -1 if val.numerator mod val.denominator < 0 else 0
+		result = number.truncate(val) + nudge
+	else:
+		result = _builtin_floor_float(val)
+	end if
+end floor
+
+function ceiling(val):
+	# Round up to the nearest integer toward positive infinity.
+	if val.is_rational:
+		var nudge = 1 if val.numerator mod val.denominator > 0 else 0
+		result = number.truncate(val) + nudge
+	else:
+		result = _builtin_ceiling_float(val)
+	end if
+end ceiling
+
+function truncate(val):
+	# Remove the decimal part - round toward zero.
+	if val.is_rational:
+		var nudge = val.numerator - (val.numerator mod val.denominator)
+		result = nudge / val.denominator
+	else:
+		result = _builtin_truncate_float(val)
+	end if
+end truncate
+
+function absolute(val):
+	# remove negative sign; return zero or positive number.
+	result = val * number.sign(val)
+end absolute
+
+function to_float(val) = _builtin_to_float(val)
+

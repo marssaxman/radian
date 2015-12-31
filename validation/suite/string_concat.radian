@@ -1,0 +1,25 @@
+import string from radian
+def greeting = "hello, world!"
+def catter = "hello" & ", " & "world!"
+assert catter = greeting
+assert 'hello, ' & "world!" = greeting
+var char_by_char = ""
+for ch in greeting:
+	char_by_char->concatenate( string.from_codepoint(ch) )
+end ch
+assert char_by_char = catter
+assert char_by_char = greeting
+
+
+def wordlist = "the", "quick", "brown", "fox", "jumps", "over", "the",
+		"lazy", "dog"
+var smushphrase = ""
+for word in wordlist:
+	smushphrase = smushphrase & word & " "
+end word
+def wholephrase = "the quick brown fox jumps over the lazy dog "
+assert smushphrase = wholephrase
+assert string.length(smushphrase) = string.length(wholephrase)
+assert string.length("howdy") = 5
+assert string.length("howdy" & "doody") = 10
+

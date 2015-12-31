@@ -1,0 +1,23 @@
+Radian programming language compiler
+<http://www.radian-lang.org/>
+
+Building Radian
+===============
+
+After you have cloned the source repository, you can download and install all
+required libraries by executing ./make_devenv.sh. Libraries will be installed
+in the subfolder './devenv' so that your system installation is unaffected.
+
+When the CHANGES log shows that Radian has upgraded to a newer version of one
+of its libraries, simply run './make_devenv.sh' again to update your build
+environment.
+
+Once you have set up a development environment, the build process depends on 
+your operating system. On Linux systems, cd into the './linux' directory and
+make as usual. On Mac OS X, open './macosx/radian.xcodeproj' and build, or
+use the xcodebuild tool to compile the project. Radian does not use autotools,
+so there is no './configure' step.
+
+Regardless of platform, the finished executable will be placed in the root
+directory. You may run the validation suite by executing './check'.
+

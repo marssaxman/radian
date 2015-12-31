@@ -1,0 +1,195 @@
+# library/set.radian: implementation of a set container
+#
+# Copyright 2012 Mars Saxman
+#
+# This software is provided 'as-is', without any express or implied warranty.
+# In no event will the authors be held liable for any damages arising from the
+# use of this software.
+#
+# Permission is granted to anyone to use this software for any purpose,
+# including commercial applications, and to alter it and redistribute it freely,
+# subject to the following restrictions:
+#
+# 1. The origin of this software must not be misrepresented; you must not claim
+# that you wrote the original software. If you use this software in a product,
+# an acknowledgment in the product documentation would be appreciated but is
+# not required.
+#
+# 2. Altered source versions must be plainly marked as such, and must not be
+# misrepresented as being the original software.
+#
+# 3. This notice may not be removed or altered from any source distribution.
+
+import relation from radian
+
+# a set may or may not be a bounded container
+# this default set is, but the container methods are not part of the set type.
+function type(obj):
+	result = obj has :lookup
+	result = result and obj has :add
+	result = result and obj has :remove
+	result = result and obj has :is_empty
+	result = result and obj has :contains
+end type
+
+object _node(key, level, left, right):
+	def _key = key
+	var _level = level
+	var _left = left
+	var _right = right
+	function size = 1 + self._left.size + self._right.size
+	function is_empty = false
+	function lookup(key):
+		# Return true if the key is present, false if it is not.
+		# We implement 'contains' because this is its canonical job, but we
+		# also implement 'lookup' to back up the subscript operator.
+		var rel = key.compare_to(self._key)
+		if relation.is_less(rel):
+			result = self._left.lookup(key)
+		else if relation.is_greater(rel):
+			result = self._right.lookup(key)
+		else:
+			result = true
+		end if
+	end lookup
+	function contains(key) = self.lookup(key)
+
+	method add(key):
+		var rel = key.compare_to(self._key)
+		if relation.is_less(rel):
+			# Add key to the left branch, then rebalance the tree.
+			self->_left->add(key)
+			self->_rebalance_for_add
+		else if relation.is_greater(rel):
+			self->_right->add(key)
+			self->_rebalance_for_add
+		else:
+			# the key is already set, right here. No work to do.
+		end if
+	end add
+	method _rebalance_for_add:
+		# maintain the aa-tree right-leaning invariants
+		self->_skew
+		self->_split
+	end _rebalance_for_add
+
+	method remove(key):
+		var rel = key.compare_to(self._key)
+		if relation.is_less(rel):
+			self->_left->remove(key)
+		else if relation.is_greater(rel):
+			self->_right->remove(key)
+		else:
+			if self._left.is_empty:
+				self = self._right
+			else if self._right.is_empty:
+				self = self._left
+			else:
+				# Find the deleted node's immediate successor. This will be the
+				# leftmost node on the deleted node's right branch.
+				var successor = self._right
+				while not successor._left.is_empty:
+					successor = successor._left
+				end while
+				var succ_key = successor._key
+				self->_right = self._right.remove( succ_key )
+				self->_key = succ_key
+			end if
+		end if
+		self->_rebalance_for_remove
+	end remove
+	method _rebalance_for_remove:
+		var threshold = self._level - 1
+		if self._left._level < threshold or self._right._level < threshold:
+			# If we have created a level gap, we need to rebalance the tree.
+			# Reduce the level of the current node, since it has no sub-nodes
+			# that would justify its current level.
+			self->_level = threshold
+			# If reducing the level of the current node put the right node
+			# above the current one, reduce the right node too. This creates a
+			# horizontal link, which we will rebalance in a moment.
+ 			if self._right._level > threshold:
+				self->_right->_level = threshold
+			end if
+			# Now go rebalance everything
+			self->_skew
+			self->_right->_skew
+			self->_right->_right->_skew
+			self->_split
+			self->_right->_split
+		end if
+	end _rebalance_for_remove
+
+	method _skew:
+		if self._level = self._left._level:
+			var left = self._left
+			self->_left = left._right
+			left->_right = self
+			self = left
+		end if
+	end _skew
+	method _split:
+		var right = self._right
+		if self._level = right._right._level:
+			self->_right = right._left
+			right->_left = self
+			self = right
+			self->_level->add(1)
+		end if
+	end _split
+end _node
+
+object blank:
+	function is_empty = true
+	function contains(key) = false
+	function lookup(key) = false
+	function size = 0
+	function remove(key) = self
+	function add(key) = set._node(key, 1, self, self)
+	function iterate:
+		import iterator from radian
+		result = iterator.blank
+	end iterate
+
+	# Internal methods that let the blank silently masquerade as a _node
+	def _level = 0
+	function _left = self
+	function _right = self
+	function _rebalance_for_remove = self
+end blank
+
+function from_sequence(seq):
+	result = set.blank
+	for x in seq:
+		result->add(x)
+	end x
+end from_sequence
+
+
+function union(a, b):
+	# items which are in either A or B
+	result = a
+	for item in b:
+		result->add(item)
+	end
+end union
+
+function intersection(a, b):
+	# all items which are in both A and B
+	result = set.blank
+	for item in a:
+		if b.contains(item):
+			result->add(item)
+		end if
+	end item
+end intersection
+
+function difference(a, b):
+	# all the items in A which are not also in B
+	result = set.blank
+	for item in a:
+		if not b.contains(item):
+			result->add(item)
+		end if
+	end item
+end difference

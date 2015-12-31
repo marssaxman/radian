@@ -1,0 +1,168 @@
+# library/sequence.radian: manipulators for all types of sequences
+#
+# Copyright 2010-2012 Mars Saxman
+#
+# This software is provided 'as-is', without any express or implied warranty.
+# In no event will the authors be held liable for any damages arising from the
+# use of this software.
+#
+# Permission is granted to anyone to use this software for any purpose,
+# including commercial applications, and to alter it and redistribute it freely,
+# subject to the following restrictions:
+#
+# 1. The origin of this software must not be misrepresented; you must not claim
+# that you wrote the original software. If you use this software in a product,
+# an acknowledgment in the product documentation would be appreciated but is
+# not required.
+#
+# 2. Altered source versions must be plainly marked as such, and must not be
+# misrepresented as being the original software.
+#
+# 3. This notice may not be removed or altered from any source distribution.
+
+function type(obj):
+	result = obj has :iterate
+end type
+
+object blank:
+	# the canonical empty sequence
+	function iterate:
+		import iterator from radian
+		result = iterator.blank
+	end iterate
+end blank
+
+function singleton(X):
+	# a sequence containing a single item
+	yield X
+end singleton
+
+function replicate(X, N):
+	while N > 0:
+		yield X
+		N = N - 1
+	end while
+end replicate
+
+object map(seq, output):
+	function iterate:
+		object maperator(iter):
+			var _iter = iter
+			function is_valid = self._iter.is_valid
+			function current = invoke(output: self._iter.current)
+			method next:
+				self->_iter->next
+			end next
+		end maperator
+		result = maperator(seq.iterate)
+	end iterate
+end map
+
+object filter(seq, predicate):
+	function iterate:
+		object filterator(iter):
+			var _iter = iter
+			function is_valid = self._iter.is_valid
+			function current = self._iter.current
+			method next:
+				self->_iter->next
+				self->skip
+			end next
+			method skip:
+				while self._iter.is_valid and not invoke(predicate: self.current):
+					self->_iter->next
+				end while
+			end skip
+		end filterator
+		result = filterator(seq.iterate)
+		result->skip
+	end iterate
+end filter
+
+object from_iterator(iter):
+	function iterate:
+		result = iter
+	end iterate
+end from_iterator
+
+object concatenate(left, right):
+	# This could be done much more easily with the yield statement, but it was
+	# written before the yield statement existed, and I thought I might end up
+	# using it as part of the implementation of delegated yields. That didn't
+	# turn out to be necessary. Still, this works, so why mess with it?
+	function iterate:
+		def lefterator = left.iterate
+		def righterator = right.iterate
+		if lefterator.is_valid:
+			object concaterator(iter, next_iter):
+				var _iter = iter
+				function is_valid = self._iter.is_valid
+				function current = self._iter.current
+				method next:
+					self->_iter->next
+					if not self._iter.is_valid:
+						self = next_iter
+					end if
+				end next
+			end concaterator
+			result = concaterator(lefterator, righterator)
+		else:
+			result = righterator
+		end if
+	end iterate
+end concatenate
+
+function compare(left, right):
+	def less_than = capture(a,b,c: a)
+	def equal_to = capture(a,b,c: b)
+	def greater_than = capture(a,b,c: c)
+	var left_iter = left.iterate
+	var right_iter = right.iterate
+	while left_iter.is_valid and right_iter.is_valid and
+			left_iter.current = right_iter.current:
+		left_iter->next
+		right_iter->next
+	end while
+	if left_iter.is_valid and not right_iter.is_valid:
+		result = greater_than
+	else if right_iter.is_valid and not left_iter.is_valid:
+		result = less_than
+	else if left_iter.is_valid and right_iter.is_valid:
+		result = left_iter.current.compare_to( right_iter.current )
+	else:
+		result = equal_to
+	end if
+end compare
+
+# Return the first N elements of the sequence, or the whole sequence if it is
+# shorter than N elements.
+function take(seq, N):
+	var iter = seq.iterate
+	while iter.is_valid and N > 0:
+		yield iter.current
+		iter->next
+		N = N - 1
+	end while
+end take
+
+# Skip over the first N elements of the sequence, then return the remaining
+# elements, if any.
+function drop(seq, N):
+	var i = 0
+	for item in seq:
+		if i >= N:
+			yield item
+		end if
+		i = i + 1
+	end item
+end drop
+
+function length(seq):
+	result = 0
+	for item in seq:
+		result->add(1)
+	end item
+end length
+
+# quicker way to determine if a sequence is blank than to count its elements
+function is_empty(seq) = not seq.iterate.is_valid

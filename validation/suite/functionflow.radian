@@ -1,0 +1,31 @@
+# this little program exercises several important language features:
+# - declaring functions and variables
+# - invoking functions
+# - functions can access context variables
+# - if/else operator
+# - comparison operator (greater than)
+# - addition operator
+# - generate a closure
+# - invoke a closure
+# - context variable captured at creation of closure ("lexical scope")
+# We expect this program to return the value 61. 
+# Failure of the if operator or the comparison might cause it to return 59.
+# Failure of lexical scope might cause it to return 60.
+# Other failures would probably show up as compilation errors.
+
+
+var result = 0
+var incrementor = 1
+
+function addOne(x):
+	var locamentor = incrementor if incrementor > 0 else -incrementor
+
+	result = x + locamentor
+
+end addOne
+incrementor = 0
+function process(processor, x) = invoke(processor: x)
+
+result = process(capture(x: addOne(x)), 60)
+
+assert result = 61

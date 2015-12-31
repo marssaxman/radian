@@ -1,0 +1,20 @@
+#!/usr/bin/env radian
+import number from radian
+import string from radian
+function count_str(i):
+	if i > 0:
+		result = string.decimal(i) & " bottle" & ("s" if i > 1 else "")
+	else:
+		result = "no more bottles"
+	end if
+end count_str
+for i in number.range_with_step(99, 0, -1):
+	var bottles = count_str(i)
+	sync io.print( bottles & " of beer on the wall, " & bottles & " of beer," )
+	var action = "Take one down and pass it around, " if i >
+			0 else "Go to the store and buy some more, "
+	bottles = count_str(i - 1 if i > 0 else 99)
+	sync io.print( action & bottles & " of beer on the wall." )
+	sync io.print( "" )
+end i
+

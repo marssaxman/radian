@@ -1,0 +1,45 @@
+#!/usr/bin/env radian
+
+import set from radian
+var it = set.blank
+assert not it.contains(1)
+assert it.size = 0
+assert it.is_empty
+it->add(1)
+assert it.contains(1)
+assert not it.contains(0)
+it->add(0)
+assert it.contains(0)
+assert it.contains(1)
+assert not it.contains(2)
+assert it.size = 2
+assert not it.is_empty
+
+# list of primes
+def primes = 2, 3, 5, 7, 11, 13, 17, 19, 23, 29
+it = set.from_sequence(primes)
+assert it.size = 10
+assert not it.is_empty
+assert not it[42]
+assert not it.contains(42)
+for x in primes:
+	assert it.contains(x)
+end x
+it->remove(11)
+for x in primes:
+	if x = 11:
+		assert not it.contains(x)
+	else:
+		assert it.contains(x)
+	end if
+end x
+import string from radian
+assert it.size = 9
+assert it.contains(7)
+assert it.contains(13)
+assert not it.contains(11)
+
+
+
+# let's play with the basic set operations
+

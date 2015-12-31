@@ -1,0 +1,85 @@
+# test out the fspath object
+
+import fspath from radian
+
+# We want a test which will work on any platform, so we'll use a custom
+# delimiter character for these tests. How about ":", for nostalgia's sake...
+var custom_path = fspath
+custom_path->delimiter = 0x3A
+function path(str) = custom_path.from_string(str)
+
+# Get the trailing name component from a path
+assert path(":foo:bar:baz.qux").name = "baz.qux"
+assert path(":foo:bar:baz:").name = ""
+assert path("foo:bar:baz").name = "baz"
+
+# Change the name of a path
+var namepath1 = path(":foo:bar:baz.qux")
+namepath1->name = "garply"
+assert namepath1.to_string = ":foo:bar:garply"
+var namepath2 = path(":foo:bar:baz:")
+namepath2->name = "garply"
+assert namepath2.to_string = ":foo:bar:baz:garply"
+var namepath3 = path("foo:bar:baz")
+namepath3->name = "garply"
+assert namepath3.to_string = "foo:bar:garply"
+
+# Get the base name 
+assert path(":foo:bar:baz.qux").base_name = "baz"
+assert path(":foo:bar:baz:").base_name = ""
+assert path("foo:bar:baz").base_name = "baz"
+assert path("foo:bar:baz.qux.grint").base_name = "baz.qux"
+
+# Change the base name, leaving the extension alone
+var basepath1 = path(":foo:bar:baz.qux")
+basepath1->base_name = "garply"
+assert basepath1.to_string = ":foo:bar:garply.qux"
+var basepath2 = path(":foo:bar:baz:")
+basepath2->base_name = "garply"
+assert basepath2.to_string = ":foo:bar:baz:garply"
+var basepath3 = path(":foo:bar:baz.qux.fred")
+basepath3->base_name = "garply"
+assert basepath3.to_string = ":foo:bar:garply.fred"
+var basepath4 = path(":foo:bar:baz")
+basepath4->base_name = "garply"
+assert basepath4.to_string = ":foo:bar:garply"
+
+# Get the extension
+assert path(":foo:bar:baz.qux").extension = "qux"
+assert path(":foo:bar:baz:").extension = ""
+assert path("foo:bar:baz").extension = ""
+assert path("foo:bar:baz.qux.grint").extension = "grint"
+
+# Change the extension
+var expath1 = path(":foo:bar:baz.qux")
+expath1->extension = "garply"
+assert expath1.to_string = ":foo:bar:baz.garply"
+var expath2 = path(":foo:bar:baz:")
+expath2->extension = "garply"
+assert expath2.to_string = ":foo:bar:baz:.garply"
+var expath3 = path("foo:bar:baz")
+expath3->extension = "garply"
+assert expath3.to_string = "foo:bar:baz.garply"
+var expath4 = path(":foo:bar:baz.qux.fred")
+expath4->extension = "garply"
+assert expath4.to_string = ":foo:bar:baz.qux.garply"
+
+# Get the container from a compound path
+assert path(":foo:bar:baz.qux").container.to_string = ":foo:bar"
+assert path(":foo:bar:baz").container.to_string = ":foo:bar"
+assert path("foo:bar:baz").container.to_string = "foo:bar"
+assert path("foo:bar:baz.qux.grint").container.to_string = "foo:bar"
+assert path("foo").container.to_string = ""
+
+# Get sub-items from a directory path
+def subpath1 = path(":foo:bar:baz.qux").item("fred")
+assert subpath1.to_string = ":foo:bar:baz.qux:fred"
+def subpath2 = path(":foo:bar:baz:").item("fred")
+assert subpath2.to_string = ":foo:bar:baz:fred"
+def subpath3 = path("foo:bar:baz").item("fred")
+assert subpath3.to_string = "foo:bar:baz:fred"
+def subpath4 = path("").item("fred")
+assert subpath4.to_string = "fred"
+def subpath5 = path("file\\:").item("fred")
+assert subpath5.to_string = "file\\:fred"
+

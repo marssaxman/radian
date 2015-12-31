@@ -1,0 +1,53 @@
+# library/math.radian: common mathematical functions
+#
+# Copyright 2013 Mars Saxman
+#
+# This software is provided 'as-is', without any express or implied warranty.
+# In no event will the authors be held liable for any damages arising from the
+# use of this software.
+#
+# Permission is granted to anyone to use this software for any purpose,
+# including commercial applications, and to alter it and redistribute it freely,
+# subject to the following restrictions:
+#
+# 1. The origin of this software must not be misrepresented; you must not claim
+# that you wrote the original software. If you use this software in a product,
+# an acknowledgment in the product documentation would be appreciated but is
+# not required.
+#
+# 2. Altered source versions must be plainly marked as such, and must not be
+# misrepresented as being the original software.
+#
+# 3. This notice may not be removed or altered from any source distribution.
+
+# constants
+def π = 3.1415926535898
+function pi = math.π
+def e = 2.71828182845904523536
+
+# basic stuff
+function max(a, b) = a if a > b else b
+function min(a, b) = a if a < b else b
+
+# exponential stuff
+function exp(x) = math.e ** x
+function sqrt(x) = x ** (1/2)
+function hypot(x, y) = math.sqrt(x ** 2 + y ** 2)
+function pow(x, y) = x ** y
+
+# trigonometric functions
+function sin(x) = _builtin_sin(x)
+function cos(x) = _builtin_cos(x)
+function tan(x) = _builtin_tan(x)
+function asin(x) = _builtin_asin(x)
+function acos(x) = _builtin_acos(x)
+function atan(x) = _builtin_atan(x)
+function atan2(y, x) = _builtin_atan2(y, x)
+
+# hyperbolic functions
+function sinh(x) = _builtin_sinh(x)
+function cosh(x) = _builtin_cosh(x)
+function tanh(x) = _builtin_tanh(x)
+function asinh(x) = _builtin_asinh(x)
+function acosh(x) = _builtin_acosh(x)
+function atanh(x) = _builtin_atanh(x)

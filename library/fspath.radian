@@ -1,0 +1,153 @@
+# Copyright 2013 Mars Saxman
+#
+# This software is provided 'as-is', without any express or implied warranty.
+# In no event will the authors be held liable for any damages arising from the
+# use of this software.
+#
+# Permission is granted to anyone to use this software for any purpose,
+# including commercial applications, and to alter it and redistribute it freely,
+# subject to the following restrictions:
+#
+# 1. The origin of this software must not be misrepresented; you must not claim
+# that you wrote the original software. If you use this software in a product,
+# an acknowledgment in the product documentation would be appreciated but is
+# not required.
+#
+# 2. Altered source versions must be plainly marked as such, and must not be
+# misrepresented as being the original software.
+#
+# 3. This notice may not be removed or altered from any source distribution.
+
+# The path delimiter character is platform-specific. 
+# This import will pull in the appropriate platform-specific implementation
+# of the _fspath_delimiter module, so whichever one we get will return the
+# delimiter char for the current target platform.
+import _fspath_delimiter from radian
+var delimiter = _fspath_delimiter.char
+
+function type(obj):
+	result = obj has :name
+	result = result and obj has :to_string
+	result = result and obj has :is_empty
+	result = result and obj has :name
+	result = result and obj has :name=
+	result = result and obj has :base_name
+	result = result and obj has :base_name=
+	result = result and obj has :extension
+	result = result and obj has :extension=
+	result = result and obj has :container
+	result = result and obj has :item
+end type
+
+object from_string(str):
+	import string from radian
+	import sequence from radian
+	import iterator from radian
+	var _path = str
+	function to_string = self._path
+	function is_empty = string.is_empty(self._path)
+
+	function name:
+		# Search for the last path separator. Return everything which follows.
+		# If there is no path separator, then the whole string is the name.
+		var pathPtr = self._path.iterate
+		var iter = pathPtr
+		while iter.is_valid:
+			def current = iter.current
+			iter->next
+			if current = fspath.delimiter:
+				pathPtr = iter
+			end if
+		end while
+		result = string.from_sequence(sequence.from_iterator(pathPtr))
+	end name
+
+	method name=(new):
+		# Sibling path: a different item in the same directory.
+		self = self.container.item(new)
+	end name=
+
+	function extension:
+		# Get the name from the path. Search for its last period character.
+		# Everything which follows is the extension. If there are no periods,
+		# then there is no extension.
+		var extPtr = iterator.blank
+		var iter = self.name.iterate
+		while iter.is_valid:
+			def current = iter.current
+			iter->next
+			if current = 0x2E:
+				extPtr = iter
+			end if
+		end while
+		result = string.from_sequence(sequence.from_iterator(extPtr))
+	end extension
+
+	method _join_name(base, ext):
+		self->name = base if string.is_empty(ext) else base & "." & ext
+	end _join_name
+
+	method extension=(new):
+		self->_join_name(self.base_name, new)
+	end extension=
+
+	function base_name:
+		# Get the path name. Search for its last period character. Everything
+		# before that is the base name. If there are no periods, the whole
+		# name is the base name.
+		var base_len = 0
+		var total_len = 0
+		var found_period = false
+		def name = self.name
+		for char in name:
+			if char = 0x2E:
+				base_len = total_len
+				found_period = true
+			end if
+			total_len->add(1)
+		end char
+		result = string.take(name, base_len) if found_period else name
+	end base_name
+
+	method base_name=(new):
+		self->_join_name(new, self.extension)
+	end base_name=
+
+	function container:
+		# Drop the last delimiter and everything which follows it.
+		# If there are no delimiters, return an empty string.
+		var container_len = 0
+		var total_len = 0
+		for char in self._path:
+			if char = fspath.delimiter:
+				container_len = total_len
+			end if
+			total_len->add(1)
+		end char
+		def container_path = string.take(self._path, container_len)
+		result = fspath.from_string(container_path)
+	end container
+
+	function item(name):
+		# Append the given name to the current path, creating a path to one of
+		# the items contained inside this directory.
+		
+
+		function seq:
+			if not string.is_empty(self._path):
+				var lastchar = 0
+				for char in self._path:
+					yield char
+					lastchar = char
+				end char
+				if lastchar != fspath.delimiter:
+					yield fspath.delimiter
+				end if
+			end if
+			yield from name
+		end seq
+		result = fspath.from_string(string.from_sequence(seq))
+	end item
+
+end from_string
+

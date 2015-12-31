@@ -1,0 +1,7 @@
+# test out the sequence comparison function
+import sequence from radian
+assert invoke(sequence.compare("foo", "bar"): false, false, true)
+assert invoke(sequence.compare("boozawah", "boo"): false, false, true)
+assert invoke(sequence.compare("eep", "eep"): false, true, false)
+assert invoke(sequence.compare("ayb", "cloob"): true, false, false)
+

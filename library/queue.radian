@@ -1,0 +1,86 @@
+# library/queue.radian: utilities for working with single-ended queues
+#
+# Copyright 2012 Mars Saxman
+#
+# This software is provided 'as-is', without any express or implied warranty.
+# In no event will the authors be held liable for any damages arising from the
+# use of this software.
+#
+# Permission is granted to anyone to use this software for any purpose,
+# including commercial applications, and to alter it and redistribute it freely,
+# subject to the following restrictions:
+#
+# 1. The origin of this software must not be misrepresented; you must not claim
+# that you wrote the original software. If you use this software in a product,
+# an acknowledgment in the product documentation would be appreciated but is
+# not required.
+#
+# 2. Altered source versions must be plainly marked as such, and must not be
+# misrepresented as being the original software.
+#
+# 3. This notice may not be removed or altered from any source distribution.
+
+function type(obj):
+	# methods which define the "stack" interface
+	result = obj has :append
+	result = result and obj has :head
+	result = result and obj has :pop
+	result = result and obj has :is_empty
+end type
+
+function from_sequence(seq):
+	result = queue.blank
+	for item in seq:
+		result->append(item)
+	end item
+end from_sequence
+
+object _polyqueue(current):
+	import stack from radian
+	# The headlist is in the same order as our queue: that is, its head is
+	# our head, and we can pop items from it to pop items from the queue.
+	var _headlist = stack.blank.push(current)
+	# The taillist is in reverse order. We append to the queue by pushing items
+	# to the taillist. When a pop drains the headlist, we'll reverse the tail
+	# to create a new headlist.
+	var _taillist = stack.blank
+
+	function is_empty = false
+	function size = self._headlist.size + self._taillist.size
+	function iterate = queue._iterator(self)
+	function head = self._headlist.head
+	method append(val):
+		self->_taillist->push(val)
+	end append
+	method pop:
+		self->_headlist->pop
+		if self._headlist.is_empty:
+			# Move all items from the taillist to the headlist, in reverse
+			# order. We can do this by the convenient expedient of popping
+			# from the taillist and pushing to the headlist, thus reversing
+			# the order we used to insert items on the taillist.
+			while not self._taillist.is_empty:
+				self->_headlist->push( self._taillist.head )
+				self->_taillist->pop
+			end while
+		end if
+		if self._headlist.is_empty:
+			self = queue.blank
+		end if
+	end pop
+end _polyqueue
+
+object blank:
+	def is_empty = true
+	def size = 0
+	function iterate = queue._iterator(self)
+	function pop = throw(:undefined)
+	function head = throw(:undefined)
+	function append(value) = queue._polyqueue(value)
+end blank
+
+object _iterator(Q):
+	function is_valid = not Q.is_empty
+	function current = Q.head
+	function next = queue._iterator(Q.pop)
+end _iterator

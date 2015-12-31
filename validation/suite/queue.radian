@@ -1,0 +1,28 @@
+# does the library queue object work?
+import queue from radian
+import list from radian
+import string from radian
+import sequence from radian
+
+var flort = queue.blank
+flort->append("ONE!!!")
+flort->append("TWO!!!!")
+flort->append("THREE!!!!!")
+flort->append("eh, four")
+var out = list.blank
+while not flort.is_empty:
+	out->append( flort.head )
+	flort->pop
+end while
+
+assert out.size = 4
+assert out[3] = "eh, four"
+assert out[2] = "THREE!!!!!"
+assert out[1] = "TWO!!!!"
+assert out[0] = "ONE!!!"
+
+
+var kyoo = queue.from_sequence("hello, world")
+var reco = string.from_sequence(kyoo)
+assert reco = "hello, world"
+

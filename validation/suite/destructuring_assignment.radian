@@ -1,0 +1,15 @@
+# assign elements of a tuple to some vars
+def foo = 1, 2, 3
+var x
+var y
+var z 
+x, y, z = foo
+assert x = 1
+assert y = 2
+assert z = 3
+
+# now do the same assignment using list unpacking
+[x, y, z] = foo
+assert x = 1
+assert y = 2
+assert z = 3

@@ -1,0 +1,19 @@
+# make sure that tuples work the way we expect them to
+
+# make a simple tuple
+# ensure that it has the elements it should
+var foo = 1, 2, 3
+assert foo[0] = 1
+assert foo[1] = 2
+assert foo[2] = 3
+
+# tuples should have a size
+assert foo.size = 3
+
+# tuples are iterable: sum the elements
+var sum = 0
+for i in foo:
+	sum = sum + i
+end i
+assert sum = 6
+
