@@ -21,13 +21,12 @@
 #include <set>
 #include "main/error.h"
 #include "main/modulelist.h"
-#include "main/platform.h"
 #include "main/command.h"
 
 class RunCommand : public Command
 {
 	public:
-		RunCommand( Platform &os, std::string &execpath );
+		RunCommand( std::string &execpath );
 		std::string Description() const
 		{
 			return "Compile a program and run it";
@@ -35,7 +34,6 @@ class RunCommand : public Command
 		std::string Help() const;
 		int Run( std::deque<std::string> args );
 	private:
-		Platform &_os;
         std::string _programRootDir;
 		std::string _executablePath;
         std::string _targetTriple;

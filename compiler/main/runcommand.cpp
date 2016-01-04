@@ -27,8 +27,7 @@
 
 using namespace std;
 
-RunCommand::RunCommand( Platform &os, string &execpath ):
-	_os(os),
+RunCommand::RunCommand( string &execpath ):
 	_executablePath(execpath)
 {
 }
@@ -77,16 +76,33 @@ void RunCommand::LocateProgramRootDir(string mainfile)
 {
 	// We will look for these modules in the directory containing the main
 	// source file.
-	string separator = _os.PathSeparator();
-	string::size_type slashpos = mainfile.find_last_of( separator );
+	string::size_type slashpos = mainfile.find_last_of("/");
 	if (slashpos != string::npos) {
 		// Break the filename off the source file path to yield the context
 		// directory.
 		_programRootDir = mainfile.substr( 0, slashpos + 1 );
 	} else {
 		// Make a reference to the current working directory.
-		_programRootDir = "." + separator;
+		_programRootDir = "./";
 	}
+}
+
+static int LoadFile( string filepath, string *output )
+{
+    FILE *input = fopen( filepath.c_str(), "r" );
+    if (!input) {
+        return errno;
+    }
+    fseek( input, 0, SEEK_END );
+    long length = ftell( input );
+    fseek( input, 0, SEEK_SET );
+    char *buf = new char[length];
+    fread(  buf, sizeof(char), length, input );
+    assert( output );
+    output->assign( buf, length );
+    delete[] buf;
+    fclose( input );
+    return 0;
 }
 
 // RunCommand::CompileProgram
@@ -99,7 +115,7 @@ bool RunCommand::CompileProgram( string filepath, ModuleList &modules )
 {
 	ErrorLog log;
 	string source;
-	int ioerror = _os.LoadFile( filepath, &source );
+	int ioerror = LoadFile( filepath, &source );
 	if (ioerror) {
 		log.ReportError(
 				Error::Type::LoadProgramFileFailed,
@@ -149,13 +165,21 @@ bool RunCommand::CompileModule( const ModuleRef &item, ModuleList &modules )
 	// lives in. Check for our special "radian" directory, which represents the
 	// standard library. Only the standard library gets access to the "builtin"
 	// functions provided by the C-implemented runtime library.
-	string moduleDir = _programRootDir;
+	string dir = _programRootDir;
 	bool allowAccessToBuiltins = false;
 	if (item.Directory() == "radian") {
-		moduleDir = _os.LibDir(_executablePath);
+		// If there's an environment variable, that will tell us where to find
+		// the library.
+		if (char *libvar = getenv("RADIAN_LIB")) {
+			dir = string(libvar);
+		}
+		// If there's no environment variable, we will look in the directory
+		// that the executable itself lives in.
+		dir = _executablePath.substr(0, _executablePath.find_last_of('/'));
+		dir += "/library";
 		allowAccessToBuiltins = true;
 	} else if (item.Directory().size() > 0) {
-		moduleDir += item.Directory();
+		dir += item.Directory();
 	}
 
 	// Now that we know where the file lives, go try to open it. If we fail,
@@ -164,7 +188,7 @@ bool RunCommand::CompileModule( const ModuleRef &item, ModuleList &modules )
 	string source;
 	string filePath;
 	std::string name = item.Target();
-	int error = LoadFileForTarget( moduleDir, name, &filePath, &source );
+	int error = LoadFileForTarget( dir, name, &filePath, &source );
 	if (error != 0) {
 		log.ReportError( Error::Type::ImportFailed, item.SourceLoc() );
 		return true;
@@ -212,11 +236,11 @@ int RunCommand::LoadFileForTarget(
 	suffixes.push_back("-" + varOS);
 	suffixes.push_back("-" + varArch);
 	suffixes.push_back("");
-	std::string base = dirPath + _os.PathSeparator() + name;
+	std::string base = dirPath + "/" + name;
 	int err = 0;
 	for (auto suffix: suffixes) {
 		*filePath = base + suffix + ".radian";
-		int err = _os.LoadFile(*filePath, output);
+		int err = LoadFile(*filePath, output);
 		if (0 == err) break;
 	}
 	return err;

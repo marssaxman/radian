@@ -35,8 +35,6 @@
 
 using namespace std;
 
-Radian::Radian( Platform &platform ): _os(platform) {}
-
 class VersionCommand : public Command
 {
 	std::string Description() const
@@ -68,8 +66,8 @@ int Radian::Main( deque<string> args )
 	map<string, Command*> commands;
 	Command *help = commands["help"] = new HelpCommand( commands );
 	commands["version"] = new VersionCommand;
-	commands["dump"] = new DumpCommand( _os );
-	Command *run = commands["run"] = new RunCommand( _os, executablePath );
+	commands["dump"] = new DumpCommand;
+	Command *run = commands["run"] = new RunCommand( executablePath );
 	
 	// If there is no argument, execute the help command.
 	if (args.empty()) {

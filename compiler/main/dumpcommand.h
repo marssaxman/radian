@@ -17,17 +17,14 @@
 #define main_dumpcommand_h
 
 #include "main/command.h"
-#include "platform.h"
 
 class DumpCommand : public Command
 {
 	public:
-		DumpCommand(Platform &os);
+		DumpCommand() {}
 		std::string Description() const;
 		std::string Help() const;
 		int Run( std::deque<std::string> args );
-	private:
-		Platform &_os;
 };
 
 #endif	//command_dump_h

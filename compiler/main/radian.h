@@ -18,18 +18,15 @@
 
 #include <deque>
 #include <string>
-#include "main/platform.h"
 
 class Radian
 {
 	public:
-		Radian(Platform &platform);
+		Radian() {}
 		virtual ~Radian() {}
 		// Invoke the compiler by instantiating it and passing in the command
 		// line args, which must be encoded in UTF-8.
 		int Main( std::deque<std::string> args );
-	private:
-		Platform &_os;
 };
 
 #endif // radian_h

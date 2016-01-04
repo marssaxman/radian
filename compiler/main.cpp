@@ -24,14 +24,6 @@
 
 using namespace std;
 
-class LinuxPlatform : public Platform
-{
-	public:
-		int LoadFile( string filepath, string *output );
-		string LibDir(const string &execpath);
-		string PathSeparator() { return "/"; }
-};
-
 int main ( int argc, char *const argv[] )
 {
 	// We will assume the args are encoded in UTF-8. There is probably
@@ -42,45 +34,7 @@ int main ( int argc, char *const argv[] )
 		args.push_back( string( argv[i] ) );
 	}
 
-	LinuxPlatform os;
-	Radian compiler(os);
+	Radian compiler;
 	return compiler.Main( args );
-}
-
-// LinuxPlatform::LoadFile
-//
-// Given a file path, load the contents up as a string. We should really use
-// mmap instead - this file open and close stuff is pointless and inefficient.
-//
-int LinuxPlatform::LoadFile( string filepath, string *output )
-{
-    FILE *input = fopen( filepath.c_str(), "r" );
-    if (!input) {
-        return errno;
-    }
-    fseek( input, 0, SEEK_END );
-    long length = ftell( input );
-    fseek( input, 0, SEEK_SET );
-    char *buf = new char[length];
-    fread(  buf, sizeof(char), length, input );
-    assert( output );
-    output->assign( buf, length );
-    delete[] buf;
-    fclose( input );
-    return 0;
-}
-
-string LinuxPlatform::LibDir(const string &execpath)
-{
-	// If there's an environment variable, that will tell us where to find the
-	// library.
-	char *libdir = getenv("RADIAN_LIB");
-	if (libdir) {
-		return string(libdir);
-	}
-
-	// If there's no environment variable, we will look in the directory that
-	// the executable itself lives in.
-	return execpath.substr( 0, execpath.find_last_of( '/' ) ) + "/library";
 }
 

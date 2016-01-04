@@ -22,8 +22,6 @@
 
 using namespace std;
 
-DumpCommand::DumpCommand(Platform &os) : _os(os) {}
-
 string DumpCommand::Description() const
 {
 	return "Compile and print out intermediate forms";
@@ -94,6 +92,24 @@ static int Dump( string path, string source, string format, string triple )
 	return 1;
 }
 
+static int LoadFile( string filepath, string *output )
+{
+    FILE *input = fopen( filepath.c_str(), "r" );
+    if (!input) {
+        return errno;
+    }
+    fseek( input, 0, SEEK_END );
+    long length = ftell( input );
+    fseek( input, 0, SEEK_SET );
+    char *buf = new char[length];
+    fread(  buf, sizeof(char), length, input );
+    assert( output );
+    output->assign( buf, length );
+    delete[] buf;
+    fclose( input );
+    return 0;
+}
+
 int DumpCommand::Run( deque<string> args )
 {
 	string format;
@@ -130,7 +146,7 @@ int DumpCommand::Run( deque<string> args )
 	}
 
 	std::string file;
-	int ioerror = _os.LoadFile( path, &file );
+	int ioerror = LoadFile( path, &file );
 	if (ioerror != 0) {
 		ErrorLog log;
 		log.ReportError(

@@ -21,14 +21,6 @@ using namespace std;
 #include <assert.h>
 #include "radian.h"
 
-class MacPlatform : public Platform
-{
-	public:
-		int LoadFile( string filepath, string *output );
-		string LibDir(const string &execpath);
-		string PathSeparator() { return "/"; }
-};
-
 int main (int argc, char * const argv[]) 
 {
 	// We'll just sort of magically assume that all the arguments are in UTF-8.
@@ -37,48 +29,8 @@ int main (int argc, char * const argv[])
 		args.push_back( string( argv[i] ) );
 	}
 
-	MacPlatform platform;
-	Radian compiler(platform);
+	Radian compiler;
 	return compiler.Main( args );
 }
 
-// MacPlatform::LoadFile
-//
-// Given a file path, load the contents up as a string. I'd like to change this
-// API someday so we can use mmap instead of the file APIs.
-//
-int MacPlatform::LoadFile( string filepath, string *output )
-{
-	FILE *input = fopen( filepath.c_str(), "r" );
-	if (!input) {
-		return errno;
-	}
-	fseek( input, 0, SEEK_END );
-	long length = ftell( input );
-	fseek( input, 0, SEEK_SET );
-	char *buf = new char[length];
-	fread(  buf, sizeof(char), length, input );
-	assert( output );
-	output->assign( buf, length );
-	delete[] buf;
-	fclose( input );
-	return 0;
-}
 
-// MacPlatform::LibDir
-//
-// Where should we look for the standard object library files?
-// 
-string MacPlatform::LibDir(const std::string &execpath)
-{
-	// If there's an environment variable, that will tell us where to find the
-	// library. 
-	char *libdir = getenv("RADIAN_LIB");
-	if (libdir) {
-		return string(libdir);
-	}
-	
-	// If there's no environment variable, we will look in the directory that
-	// the executable itself lives in.
-	return execpath.substr( 0, execpath.find_last_of( '/' ) ) + "/library";
-}
