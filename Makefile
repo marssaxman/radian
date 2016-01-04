@@ -25,5 +25,8 @@ clean:
 	-@rm -f radian
 	-@rm -rf $(call findtype, o d, obj)
 
+check:
+	@./validation/check.sh ./radian ./validation/suite/
+
 .PHONY: all clean
 
