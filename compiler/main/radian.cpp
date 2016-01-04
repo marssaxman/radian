@@ -86,3 +86,17 @@ int Radian::Main( deque<string> args )
 	}
 }
 
+int main ( int argc, char *const argv[] )
+{
+	// We will assume the args are encoded in UTF-8. There is probably
+	// something we should do with the locale setting and iconv, but I haven't
+	// worked it out yet.
+	deque<string> args;
+	for (int i = 0; i < argc; i++) {
+		args.push_back( string( argv[i] ) );
+	}
+
+	Radian compiler;
+	return compiler.Main( args );
+}
+

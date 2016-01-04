@@ -6,7 +6,7 @@ compiler: radian
 include srctree.mk
 
 SUFFIXES:=c cpp
-CXXFLAGS+=-Icompiler -std=c++11
+CXXFLAGS+=-Icompiler -std=c++11 -MD -MP -Werror
 
 -include $(call findtype, $(SUFFIXES), obj/compiler)
 
