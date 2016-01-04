@@ -1,4 +1,4 @@
-// Copyright 2009-2013 Mars Saxman.
+// Copyright 2009-2016 Mars Saxman.
 //
 // Radian is free software: you can redistribute it and/or modify it under the
 // terms of the GNU General Public License as published by the Free Software
@@ -13,15 +13,14 @@
 // You should have received a copy of the GNU General Public License along with
 // Radian.  If not, see <http://www.gnu.org/licenses/>.
 
+#ifndef semantics_expressionanalyzer_h
+#define semantics_expressionanalyzer_h
 
-#ifndef expressionanalyzer_h
-#define expressionanalyzer_h
-
-#include "error.h"
-#include "flowgraph.h"
-#include "ast.h"
-#include "symbols.h"
-#include "scope.h"
+#include "main/error.h"
+#include "flowgraph/flowgraph.h"
+#include "ast/ast.h"
+#include "semantics/symbols.h"
+#include "semantics/scope.h"
 
 namespace Semantics {
 

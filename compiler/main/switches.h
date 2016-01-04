@@ -1,4 +1,4 @@
-// Copyright 2012 Mars Saxman.
+// Copyright 2012-2016 Mars Saxman.
 //
 // Radian is free software: you can redistribute it and/or modify it under the
 // terms of the GNU General Public License as published by the Free Software
@@ -14,8 +14,8 @@
 // Radian. If not, see <http://www.gnu.org/licenses/>.
 
 
-#ifndef switches_h
-#define switches_h
+#ifndef main_switches_h
+#define main_switches_h
 
 #include <deque>
 #include <vector>

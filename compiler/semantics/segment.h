@@ -1,4 +1,4 @@
-// Copyright 2012 Mars Saxman.
+// Copyright 2012-2016 Mars Saxman.
 //
 // Radian is free software: you can redistribute it and/or modify it under the
 // terms of the GNU General Public License as published by the Free Software
@@ -17,14 +17,14 @@
 // Each segment is a separate invokable within a single semantic scope. Symbol
 // definitions span segments. A scope may have only one segment.
 
-#ifndef segment_h
-#define segment_h
+#ifndef semantics_segment_h
+#define semantics_segment_h
 
-#include "pool.h"
-#include "symbols.h"
-#include "node.h"
 #include <map>
 #include <queue>
+#include "flowgraph/pool.h"
+#include "semantics/symbols.h"
+#include "flowgraph/node.h"
 
 namespace Semantics {
 

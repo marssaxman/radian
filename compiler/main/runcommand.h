@@ -1,4 +1,4 @@
-// Copyright 2013 Mars Saxman.
+// Copyright 2013-2016 Mars Saxman.
 //
 // Radian is free software: you can redistribute it and/or modify it under the
 // terms of the GNU General Public License as published by the Free Software
@@ -13,16 +13,16 @@
 // You should have received a copy of the GNU General Public License along with
 // Radian. If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef runcommand_h
-#define runcommand_h
+#ifndef main_runcommand_h
+#define main_runcommand_h
 
 #include <deque>
 #include <string>
 #include <set>
-#include "error.h"
-#include "modulelist.h"
-#include "platform.h"
-#include "command.h"
+#include "main/error.h"
+#include "main/modulelist.h"
+#include "main/platform.h"
+#include "main/command.h"
 
 class RunCommand : public Command
 {

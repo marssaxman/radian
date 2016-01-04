@@ -1,4 +1,4 @@
-// Copyright 2012 Mars Saxman.
+// Copyright 2012-2016 Mars Saxman.
 //
 // Radian is free software: you can redistribute it and/or modify it under the
 // terms of the GNU General Public License as published by the Free Software
@@ -13,18 +13,17 @@
 // You should have received a copy of the GNU General Public License along with
 // Radian. If not, see <http://www.gnu.org/licenses/>.
 
-
-#ifndef frontend_h
-#define frontend_h
+#ifndef main_frontend_h
+#define main_frontend_h
 
 #include <string>
-#include "ast.h"
-#include "scanner.h"
-#include "commentfilter.h"
-#include "whitespacefilter.h"
-#include "parser.h"
-#include "blanklinefilter.h"
-#include "blockstacker.h"
+#include "ast/ast.h"
+#include "lex/scanner.h"
+#include "lex/commentfilter.h"
+#include "lex/whitespacefilter.h"
+#include "parse/parser.h"
+#include "parse/blanklinefilter.h"
+#include "parse/blockstacker.h"
 
 // ErrorLog
 //

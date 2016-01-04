@@ -1,4 +1,4 @@
-// Copyright 2009-2013 Mars Saxman.
+// Copyright 2009-2016 Mars Saxman.
 //
 // Radian is free software: you can redistribute it and/or modify it under the
 // terms of the GNU General Public License as published by the Free Software
@@ -24,15 +24,14 @@
 //	increment the revision number.
 #define VERSION "0.7.0"
 
-
 #include <iostream>
 #include <fstream>
 #include <stdlib.h>
 #include <list>
-#include "radian.h"
-#include "dumpcommand.h"
-#include "helpcommand.h"
-#include "runcommand.h"
+#include "main/radian.h"
+#include "main/dumpcommand.h"
+#include "main/helpcommand.h"
+#include "main/runcommand.h"
 
 using namespace std;
 

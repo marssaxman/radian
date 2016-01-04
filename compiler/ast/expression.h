@@ -1,4 +1,4 @@
-// Copyright 2009-2013 Mars Saxman.
+// Copyright 2009-2016 Mars Saxman.
 //
 // Radian is free software: you can redistribute it and/or modify it under the
 // terms of the GNU General Public License as published by the Free Software
@@ -13,14 +13,13 @@
 // You should have received a copy of the GNU General Public License along with
 // Radian. If not, see <http://www.gnu.org/licenses/>.
 
-
-#ifndef expression_h
-#define expression_h
+#ifndef ast_expression_h
+#define ast_expression_h
 
 #include <stack>
-#include "sourcelocation.h"
-#include "token.h"
-#include "node.h"
+#include "lex/sourcelocation.h"
+#include "lex/token.h"
+#include "flowgraph/node.h"
 
 namespace AST {
 
@@ -154,4 +153,4 @@ class ExpressionAnalyzer
 
 } // namespace AST
 
-#endif // expression_h
+#endif // ast_expression_h

@@ -1,4 +1,4 @@
-// Copyright 2009-2012 Mars Saxman.
+// Copyright 2009-2016 Mars Saxman.
 //
 // Radian is free software: you can redistribute it and/or modify it under the
 // terms of the GNU General Public License as published by the Free Software
@@ -16,8 +16,8 @@
 #include <assert.h>
 #include <algorithm>
 #include <limits.h>
-#include "sourcelocation.h"
-#include "numtostr.h"
+#include "lex/sourcelocation.h"
+#include "utility/numtostr.h"
 
 using namespace std;
 

@@ -1,4 +1,4 @@
-// Copyright 2009-2012 Mars Saxman.
+// Copyright 2009-2016 Mars Saxman.
 //
 // Radian is free software: you can redistribute it and/or modify it under the
 // terms of the GNU General Public License as published by the Free Software
@@ -13,9 +13,8 @@
 // You should have received a copy of the GNU General Public License along with
 // Radian.  If not, see <http://www.gnu.org/licenses/>.
 
-
-#include "postorderdfs.h"
-#include "operation.h"
+#include "flowgraph/postorderdfs.h"
+#include "flowgraph/operation.h"
 
 using namespace Flowgraph;
 

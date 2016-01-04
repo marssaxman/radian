@@ -1,4 +1,4 @@
-// Copyright 2009-2013 Mars Saxman.
+// Copyright 2009-2016 Mars Saxman.
 //
 // Radian is free software: you can redistribute it and/or modify it under the
 // terms of the GNU General Public License as published by the Free Software
@@ -13,18 +13,16 @@
 // You should have received a copy of the GNU General Public License along with
 // Radian.  If not, see <http://www.gnu.org/licenses/>.
 
+#ifndef ast_ast_h
+#define ast_ast_h
 
+#include "ast/binop.h"
+#include "ast/comprehension.h"
+#include "ast/declaration.h"
+#include "ast/expression.h"
+#include "ast/monop.h"
+#include "ast/statement.h"
+#include "ast/subop.h"
+#include "ast/terminal.h"
 
-#ifndef ast_h
-#define ast_h
-
-#include "binop.h"
-#include "comprehension.h"
-#include "declaration.h"
-#include "expression.h"
-#include "monop.h"
-#include "statement.h"
-#include "subop.h"
-#include "terminal.h"
-
-#endif //ast_h
+#endif //ast_ast_h

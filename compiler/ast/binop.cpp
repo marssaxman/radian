@@ -1,4 +1,4 @@
-// Copyright 2009-2012 Mars Saxman.
+// Copyright 2009-2016 Mars Saxman.
 //
 // Radian is free software: you can redistribute it and/or modify it under the
 // terms of the GNU General Public License as published by the Free Software
@@ -14,8 +14,8 @@
 // Radian.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <assert.h>
-#include "binop.h"
-#include "flowgraph.h"
+#include "ast/binop.h"
+#include "flowgraph/flowgraph.h"
 
 using namespace AST;
 using namespace Flowgraph;

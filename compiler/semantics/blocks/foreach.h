@@ -1,4 +1,4 @@
-// Copyright 2009-2013 Mars Saxman.
+// Copyright 2009-2016 Mars Saxman.
 //
 // Radian is free software: you can redistribute it and/or modify it under the
 // terms of the GNU General Public License as published by the Free Software
@@ -13,11 +13,10 @@
 // You should have received a copy of the GNU General Public License along with
 // Radian.  If not, see <http://www.gnu.org/licenses/>.
 
+#ifndef semantics_blocks_foreach_h
+#define semantics_blocks_foreach_h
 
-#ifndef foreach_h
-#define foreach_h
-
-#include "loops.h"
+#include "semantics/blocks/loops.h"
 
 namespace Semantics {
 

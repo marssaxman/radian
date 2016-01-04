@@ -1,4 +1,4 @@
-// Copyright 2009-2013 Mars Saxman.
+// Copyright 2009-2016 Mars Saxman.
 //
 // Radian is free software: you can redistribute it and/or modify it under the
 // terms of the GNU General Public License as published by the Free Software
@@ -13,13 +13,12 @@
 // You should have received a copy of the GNU General Public License along with
 // Radian.  If not, see <http://www.gnu.org/licenses/>.
 
+#ifndef semantics_symbols_h
+#define semantics_symbols_h
 
-#ifndef symbols_h
-#define symbols_h
-
-#include "node.h"
-#include "token.h"
 #include <map>
+#include "flowgraph/node.h"
+#include "lex/token.h"
 
 namespace Semantics {
 

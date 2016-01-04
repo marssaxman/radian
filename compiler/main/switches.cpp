@@ -1,4 +1,4 @@
-// Copyright 2012 Mars Saxman.
+// Copyright 2012-2016 Mars Saxman.
 //
 // Radian is free software: you can redistribute it and/or modify it under the
 // terms of the GNU General Public License as published by the Free Software
@@ -17,7 +17,7 @@
 #include <assert.h>
 #include <iostream>
 #include <stdlib.h>
-#include "switches.h"
+#include "main/switches.h"
 
 using namespace std;
 

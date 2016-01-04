@@ -1,4 +1,4 @@
-// Copyright 2009-2012 Mars Saxman.
+// Copyright 2009-2016 Mars Saxman.
 //
 // Radian is free software: you can redistribute it and/or modify it under the
 // terms of the GNU General Public License as published by the Free Software
@@ -13,16 +13,11 @@
 // You should have received a copy of the GNU General Public License along with
 // Radian.  If not, see <http://www.gnu.org/licenses/>.
 
+#ifndef unicode_unicode_h
+#define unicode_unicode_h
 
-#ifndef unicode_h
-#define unicode_h
-
-#if WIN32
-	typedef unsigned int uchar_t;
-#else
-	#include <stdint.h>
-	typedef uint32_t uchar_t;
-#endif
+#include <stdint.h>
+typedef uint32_t uchar_t;
 #include <string>
 
 namespace Unicode {

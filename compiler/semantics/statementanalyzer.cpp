@@ -1,4 +1,4 @@
-// Copyright 2009-2013 Mars Saxman.
+// Copyright 2009-2016 Mars Saxman.
 //
 // Radian is free software: you can redistribute it and/or modify it under the
 // terms of the GNU General Public License as published by the Free Software
@@ -13,15 +13,14 @@
 // You should have received a copy of the GNU General Public License along with
 // Radian.  If not, see <http://www.gnu.org/licenses/>.
 
-
-#include "scope.h"
-#include "function.h"
-#include "ifthenelse.h"
-#include "loops.h"
-#include "foreach.h"
-#include "objects.h"
-#include "statementanalyzer.h"
 #include <stack>
+#include "semantics/scope.h"
+#include "semantics/closures/function.h"
+#include "semantics/blocks/ifthenelse.h"
+#include "semantics/blocks/loops.h"
+#include "semantics/blocks/foreach.h"
+#include "semantics/closures/objects.h"
+#include "semantics/statementanalyzer.h"
 
 using namespace Semantics;
 using namespace Flowgraph;

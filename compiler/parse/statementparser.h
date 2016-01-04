@@ -1,4 +1,4 @@
-// Copyright 2009-2013 Mars Saxman.
+// Copyright 2009-2016 Mars Saxman.
 //
 // Radian is free software: you can redistribute it and/or modify it under the
 // terms of the GNU General Public License as published by the Free Software
@@ -13,11 +13,10 @@
 // You should have received a copy of the GNU General Public License along with
 // Radian.  If not, see <http://www.gnu.org/licenses/>.
 
+#ifndef parse_statementparser_h
+#define parse_statementparser_h
 
-#ifndef statementparser_h
-#define statementparser_h
-
-#include "parsercore.h"
+#include "parse/parsercore.h"
 
 namespace Parser {
 

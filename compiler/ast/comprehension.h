@@ -1,4 +1,4 @@
-// Copyright 2010-2012 Mars Saxman.
+// Copyright 2010-2016 Mars Saxman.
 //
 // Radian is free software: you can redistribute it and/or modify it under the
 // terms of the GNU General Public License as published by the Free Software
@@ -13,11 +13,10 @@
 // You should have received a copy of the GNU General Public License along with
 // Radian.  If not, see <http://www.gnu.org/licenses/>.
 
+#ifndef ast_comprehension_h
+#define ast_comprehension_h
 
-#ifndef comprehension_h
-#define comprehension_h
-
-#include "expression.h"
+#include "ast/expression.h"
 
 namespace AST {
 

@@ -1,4 +1,4 @@
-// Copyright 2013 Mars Saxman.
+// Copyright 2013-2016 Mars Saxman.
 //
 // Radian is free software: you can redistribute it and/or modify it under the
 // terms of the GNU General Public License as published by the Free Software
@@ -13,8 +13,8 @@
 // You should have received a copy of the GNU General Public License along with
 // Radian. If not, see <http://www.gnu.org/licenses/>.
 
-#include "helpcommand.h"
 #include <iostream>
+#include "main/helpcommand.h"
 
 HelpCommand::HelpCommand(std::map<std::string, Command*> &commands):
 	_commands(commands)

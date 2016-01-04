@@ -1,4 +1,4 @@
-// Copyright 2009-2011 Mars Saxman.
+// Copyright 2009-2016 Mars Saxman.
 //
 // Radian is free software: you can redistribute it and/or modify it under the
 // terms of the GNU General Public License as published by the Free Software
@@ -13,17 +13,16 @@
 // You should have received a copy of the GNU General Public License along with
 // Radian.  If not, see <http://www.gnu.org/licenses/>.
 
+#ifndef linearcode_linearizer_h
+#define linearcode_linearizer_h
 
-#ifndef linearizer_h
-#define linearizer_h
-
-#include "sequence.h"
-#include "linearcode.h"
-#include "flowgraph.h"
 #include <map>
 #include <string>
 #include <vector>
 #include <queue>
+#include "utility/sequence.h"
+#include "linearcode/linearcode.h"
+#include "flowgraph/flowgraph.h"
 
 // Emit a series of LIC operations performing the computation described in the
 // input, which should be a stream of nodes representing one function in

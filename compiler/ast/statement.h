@@ -1,4 +1,4 @@
-// Copyright 2009-2013 Mars Saxman.
+// Copyright 2009-2016 Mars Saxman.
 //
 // Radian is free software: you can redistribute it and/or modify it under the
 // terms of the GNU General Public License as published by the Free Software
@@ -13,15 +13,14 @@
 // You should have received a copy of the GNU General Public License along with
 // Radian.  If not, see <http://www.gnu.org/licenses/>.
 
-
-#ifndef statement_h
-#define statement_h
+#ifndef ast_statement_h
+#define ast_statement_h
 
 #include <assert.h>
-#include "expression.h"
-#include "binop.h"
-#include "error.h"
-#include "node.h"
+#include "ast/expression.h"
+#include "ast/binop.h"
+#include "main/error.h"
+#include "flowgraph/node.h"
 
 namespace AST {
 

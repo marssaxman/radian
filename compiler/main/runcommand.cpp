@@ -1,4 +1,4 @@
-// Copyright 2013 Mars Saxman.
+// Copyright 2013-2016 Mars Saxman.
 //
 // Radian is free software: you can redistribute it and/or modify it under the
 // terms of the GNU General Public License as published by the Free Software
@@ -17,14 +17,13 @@
 #include <fstream>
 #include <stdlib.h>
 #include <list>
-#include "radian.h"
-#include "frontend.h"
-#include "symbols.h"
-#include "semantics.h"
-#include "symbols.h"
-#include "linearizer.h"
-#include "runcommand.h"
-#include "switches.h"
+#include "main/radian.h"
+#include "main/frontend.h"
+#include "semantics/semantics.h"
+#include "semantics/symbols.h"
+#include "linearcode/linearizer.h"
+#include "main/runcommand.h"
+#include "main/switches.h"
 
 using namespace std;
 

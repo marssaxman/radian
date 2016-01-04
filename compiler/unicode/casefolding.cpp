@@ -1,4 +1,4 @@
-// Copyright 2009-2012 Mars Saxman.
+// Copyright 2009-2016 Mars Saxman.
 //
 // Radian is free software: you can redistribute it and/or modify it under the
 // terms of the GNU General Public License as published by the Free Software
@@ -13,14 +13,9 @@
 // You should have received a copy of the GNU General Public License along with
 // Radian.  If not, see <http://www.gnu.org/licenses/>.
 
-
-#include "casefolding.h"
-#if WIN32
-	typedef unsigned short uint16_t;
-#else
-	#include <stdint.h>
-#endif
+#include <stdint.h>
 #include <assert.h>
+#include "unicode/casefolding.h"
 
 static void InitMap( uint16_t map[][3], uchar_t begin, uchar_t end );
 

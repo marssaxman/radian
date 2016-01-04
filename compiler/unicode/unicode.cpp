@@ -1,4 +1,4 @@
-// Copyright 2009-2013 Mars Saxman.
+// Copyright 2009-2016 Mars Saxman.
 //
 // Radian is free software: you can redistribute it and/or modify it under the
 // terms of the GNU General Public License as published by the Free Software
@@ -13,10 +13,9 @@
 // You should have received a copy of the GNU General Public License along with
 // Radian.  If not, see <http://www.gnu.org/licenses/>.
 
-
-#include "unicode.h"
 #include <assert.h>
 #include <ctype.h>
+#include "unicode/unicode.h"
 
 // This file will probably break up into smaller pieces someday.
 // We will eventually implement the logic described in "UAX #31, Unicode

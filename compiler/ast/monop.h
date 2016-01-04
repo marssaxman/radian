@@ -1,4 +1,4 @@
-// Copyright 2009-2013 Mars Saxman.
+// Copyright 2009-2016 Mars Saxman.
 //
 // Radian is free software: you can redistribute it and/or modify it under the
 // terms of the GNU General Public License as published by the Free Software
@@ -13,11 +13,10 @@
 // You should have received a copy of the GNU General Public License along with
 // Radian.  If not, see <http://www.gnu.org/licenses/>.
 
+#ifndef ast_monop_h
+#define ast_monop_h
 
-#ifndef monop_h
-#define monop_h
-
-#include "expression.h"
+#include "ast/expression.h"
 
 namespace AST {
 

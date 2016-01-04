@@ -1,4 +1,4 @@
-// Copyright 2012-2013 Mars Saxman.
+// Copyright 2012-2016 Mars Saxman.
 //
 // Radian is free software: you can redistribute it and/or modify it under the
 // terms of the GNU General Public License as published by the Free Software
@@ -13,11 +13,10 @@
 // You should have received a copy of the GNU General Public License along with
 // Radian. If not, see <http://www.gnu.org/licenses/>.
 
+#ifndef main_dumpcommand_h
+#define main_dumpcommand_h
 
-#ifndef dumpcommand_h
-#define dumpcommand_h
-
-#include "command.h"
+#include "main/command.h"
 #include "platform.h"
 
 class DumpCommand : public Command

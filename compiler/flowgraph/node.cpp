@@ -1,4 +1,4 @@
-// Copyright 2012 Mars Saxman.
+// Copyright 2016 Mars Saxman.
 //
 // Radian is free software: you can redistribute it and/or modify it under the
 // terms of the GNU General Public License as published by the Free Software
@@ -13,8 +13,8 @@
 // You should have received a copy of the GNU General Public License along with
 // Radian.  If not, see <http://www.gnu.org/licenses/>.
 
-#include "node.h"
-#include "pool.h"
+#include "flowgraph/node.h"
+#include "flowgraph/pool.h"
 
 using namespace Flowgraph;
 
