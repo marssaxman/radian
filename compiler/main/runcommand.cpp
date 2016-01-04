@@ -17,16 +17,12 @@
 #include <fstream>
 #include <stdlib.h>
 #include <list>
-#include <llvm/ADT/Triple.h>
-#include <llvm/Support/Host.h>
 #include "radian.h"
 #include "frontend.h"
 #include "symbols.h"
 #include "semantics.h"
 #include "symbols.h"
 #include "linearizer.h"
-#include "llvmjit.h"
-#include "emitllvm.h"
 #include "runcommand.h"
 #include "switches.h"
 
@@ -56,9 +52,6 @@ int RunCommand::Run( deque<string> args )
 	Switches switches;
 	switches.ProcessArguments( args );
 	_targetTriple = switches.TargetTriple();
-	if (_targetTriple.empty()) {
-		_targetTriple = llvm::sys::getDefaultTargetTriple();
-	}
 	std::string mainFile = switches.MainFile();
 	LocateProgramRootDir( mainFile );
 
@@ -71,10 +64,8 @@ int RunCommand::Run( deque<string> args )
 	// the transitive closure of all modules referenced by the main program.
 	if (CompileModules( worklist )) return true;
 
-	// Link all of the modules together, then run them in the JIT environment:
-	// that is, as part of the current process, without fork/exec.
-	LLVMJIT::LinkModules( _compiledProgram, _compiledModules );
-	return LLVMJIT::Run( _compiledProgram, switches.ProgramArgs() );
+	fprintf(stderr, "To do: implement a backend.\n");
+	exit(1);
 }
 
 // RunCommand::LocateProgramRootDir
@@ -119,9 +110,9 @@ bool RunCommand::CompileProgram( string filepath, ModuleList &modules )
 	LexerStack lexer(source, filepath);
 	ParserStack input(lexer, log, filepath);
 	Semantics::Program sp( input, log, modules, filepath );
-	EmitLLVM::Program emitter( sp );
-	_compiledProgram = emitter.Run( _backend, filepath, _targetTriple );
-	return log.HasReceivedReport() || (_compiledProgram == NULL);
+
+	// oops, we need to actually implement a compiler
+	return true;
 }
 
 // RunCommand::CompileModules
@@ -185,14 +176,14 @@ bool RunCommand::CompileModule( const ModuleRef &item, ModuleList &modules )
 	ParserStack input(lexer, log, filePath);
 	Semantics::Module sm( input, log, modules, filePath, name );
 	if (allowAccessToBuiltins) sm.EnableBuiltins();
-	EmitLLVM::Module emitter( name, sm );
-	llvm::Module *module = emitter.Run( _backend, filePath, _targetTriple );
-	if (!module) return true;
+
+	// Er, right. We need a backend here.
+	return true;
 
 	// Push the compiled module onto our output list. When all modules have
 	// been compiled, we'll pass this list into the linker.
-	_compiledModules.push_back( module );
-	return log.HasReceivedReport();
+	//_compiledModules.push_back( module );
+	//return log.HasReceivedReport();
 }
 
 // RunCommand::LoadFileForTarget
@@ -214,12 +205,8 @@ int RunCommand::LoadFileForTarget(
 	assert(filePath);
 	assert(output);
 	output->clear();
-	llvm::Triple parsedTriple( llvm::Triple::normalize( _targetTriple ) );
-	std::string varOS = parsedTriple.getOSName();
-	if (parsedTriple.isMacOSX()) {
-		varOS = "macosx";
-	}
-	std::string varArch = parsedTriple.getArchName();
+	std::string varArch = "implement me please";
+    std::string varOS = "unknown";
 
 	std::list<std::string> suffixes;
 	suffixes.push_back("-" + varOS + "-" + varArch);

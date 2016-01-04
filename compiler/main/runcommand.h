@@ -19,7 +19,6 @@
 #include <deque>
 #include <string>
 #include <set>
-#include <llvm/IR/LLVMContext.h>
 #include "error.h"
 #include "modulelist.h"
 #include "platform.h"
@@ -40,11 +39,6 @@ class RunCommand : public Command
         std::string _programRootDir;
 		std::string _executablePath;
         std::string _targetTriple;
-
-		// Collected compilation data
-		llvm::LLVMContext _backend;
-		llvm::Module *_compiledProgram;
-		std::vector<llvm::Module *> _compiledModules;
 
         void LocateProgramRootDir( std::string mainFile );
 		bool CompileProgram( std::string filepath, ModuleList &modules );

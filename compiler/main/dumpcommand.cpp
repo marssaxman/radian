@@ -15,7 +15,6 @@
 
 
 #include "dumpcommand.h"
-#include "emitllvm.h"
 #include "frontend.h"
 #include "modulelist.h"
 #include "linearizer.h"
@@ -43,10 +42,7 @@ string DumpCommand::Help() const
 	"    tokens         token stream, JSON\n"
 	"    flowgraph      dataflow graph, S-expressions\n"
 	"    lic            linearized intermediate code\n"
-	"    llvm           LLVM IR, building for the chosen target\n"
 	"\n"
-	"For LLVM, you may specify a target triple via the --target switch.\n"
-	"If you don't specify a --target, the compiler will use the default.\n"
 	"";
 	return out;
 }
@@ -86,35 +82,16 @@ static int DumpLIC( string path, string sourceFile )
 	return 0;
 }
 
-static int DumpIR( string path, string sourceFile, string triple )
-{
-	ErrorLog log;
-	LexerStack lexer( sourceFile, path );
-	ParserStack input( lexer, log, sourceFile );
-	ModuleList modules;
-	Semantics::Program sp( input, log, modules, path );
-	EmitLLVM::Program emitter( sp );
-	
-	llvm::LLVMContext context;
-	llvm::Module *module = emitter.Run( context, path, triple );
-	module->dump();
-	delete module;
-	
-	return 0;
-}
-
 static int Dump( string path, string source, string format, string triple )
 {
 	if (format == "tokens") return DumpTokens( path, source );
 	if (format == "flowgraph") return DumpFlowgraph( path, source );
 	if (format == "lic") return DumpLIC( path, source );
-	if (format == "llvm") return DumpIR( path, source, triple );
 	cerr << "Unknown output dump format \"" << format << "\"" << std::endl;
 	cerr << "Known formats are:" << std::endl;
 	cerr << "\ttokens -- token stream, JSON" << std::endl;
 	cerr << "\tflowgraph -- dataflow graph, S-expressions" << std::endl;
 	cerr << "\tlic - linearized intermediate code" << std::endl;
-	cerr << "\tllvm - LLVM IR" << std::endl;
 	return 1;
 }
 

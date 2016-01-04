@@ -79,8 +79,7 @@ void Switches::ProcessSwitch( string arg )
 				"Must supply a dump format. Options are:\n"
 				"\ttokens -- token stream, JSON\n"
 				"\tflowgraph -- dataflow graph, S-expressions\n"
-				"\tlic - linearized intermediate code\n"
-				"\tllvm - LLVM IR",
+				"\tlic - linearized intermediate code\n",
 				1 );
 		_dumpSwitch = true;
 		_dumpSwitchValue = value;

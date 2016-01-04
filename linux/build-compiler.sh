@@ -25,7 +25,7 @@ ccflags="-I../devenv/include $ccflags"
 # compiler command - needs to be gcc so we can have the -MD option
 # without -MD, we have no way to generate dependency information.
 cpp="gcc"
-ldflags="`../devenv/bin/llvm-config --libs` -lpthread -lstdc++ -ldl"
+ldflags="-lpthread -lstdc++ -ldl"
 ldflags="-L../devenv/lib $ldflags"
 # we have to link in our own stdlib so we can run programs in JIT mode
 ldflags="libstdradian.a ../devenv/lib/libffi.a $ldflags"

@@ -7,8 +7,6 @@
 SCRIPT_DIR="$( cd "$( dirname "$0" )" && pwd )"
 SETUP_DEST="$SCRIPT_DIR/devenv"
 SETUP_TMP="$SETUP_DEST/tmp"
-LLVM_URL='http://llvm.org/releases/3.3/llvm-3.3.src.tar.gz'
-LLVM_FLAGS='--enable-libcpp --enable-targets=host'
 FFI_URL='ftp://sourceware.org/pub/libffi/libffi-3.1.tar.gz'
 CPU_COUNT=1
 
@@ -40,18 +38,6 @@ if [[ -d "$SETUP_DEST" ]]; then
 fi
 mkdir "$SETUP_DEST"
 mkdir "$SETUP_TMP"
-
-cd "$SETUP_TMP"
-download 'LLVM' $LLVM_URL
-tar xfz "$(basename $LLVM_URL)"
-cd llvm*
-if [[ "$1" == '--debug' ]]; then
-    ./configure $LLVM_FLAGS --prefix="$SETUP_DEST" --disable-optimized
-else
-    ./configure $LLVM_FLAGS --prefix="$SETUP_DEST"
-fi
-make -j $CPU_COUNT
-make install
 
 cd "$SETUP_TMP"
 download 'libffi' $FFI_URL
