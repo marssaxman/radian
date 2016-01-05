@@ -22,8 +22,19 @@
 #include "parse/parser.h"
 #include "parse/blanklinefilter.h"
 #include "parse/blockstacker.h"
+#include "flowgraph/postorderdfs.h"
 #include "semantics/semantics.h"
-#include "yaml-cpp/yaml.h"
+#include "yaml-cpp/emitter.h"
+
+// The output is a YAML stream containing CFGs for the input files.
+// Each input file is a separate document.
+// Each document is a list of functions.
+// A function has a name, an arity, and an expression.
+// An expression is a list of operations.
+// An operation has an ID, which is unique within the function, and a type,
+// which identifies the sort of operation it is; the value is a list of values
+// which are operands for the operation.
+
 
 // ErrorLog
 //
@@ -74,6 +85,29 @@ public:
 	void ImportModule(std::string, std::string, const SourceLocation&) {}
 };
 
+static void emit(Flowgraph::Function *func, YAML::Emitter &dest)
+{
+	dest << YAML::BeginMap;
+	dest << YAML::Key << "name" << YAML::Value << func->Name();
+	dest << YAML::Key << "arity" << YAML::Value << func->Arity();
+	dest << YAML::Key << "expression" << YAML::Value << YAML::BeginSeq;
+	PostOrderDFS nodes(func->Exp());
+	std::map<Flowgraph::Node*, unsigned> index;
+	while (nodes.Next()) {
+		Flowgraph::Node *n = nodes.Current();
+		auto ii = index.find(n);
+		if (ii != index.end()) {
+			dest << YAML::Anchor(std::to_string(ii->second));
+		} else {
+			dest << YAML::Anchor(std::to_string(index.size()));
+			index[n] = index.size();
+		}
+		dest << n->ToString();
+	}
+	dest << YAML::EndSeq;
+	dest << YAML::EndMap;
+}
+
 static int compile(std::string path, std::ostream &dest)
 {
 	ErrorLog log;
@@ -84,14 +118,12 @@ static int compile(std::string path, std::ostream &dest)
 	Scanner tokens(ss.str(), path);
 	ParserStack ast(tokens, log, path);
 	Semantics::Program functions(ast, log, modules, path);
-	YAML::Node doc;
+	YAML::Emitter out(dest);
+	out << YAML::BeginDoc << YAML::BeginSeq;
 	while (functions.Next()) {
-		Flowgraph::Function *func = functions.Current();
-		// actually generate something here
+		emit(functions.Current(), out);
 	}
-	if (!log.HasReceivedReport()) {
-		dest << doc;
-	}
+	out << YAML::EndSeq << YAML::EndDoc;
 	return log.HasReceivedReport();
 }
 
