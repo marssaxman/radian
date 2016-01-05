@@ -25,6 +25,7 @@
 #include "parse/blanklinefilter.h"
 #include "parse/blockstacker.h"
 #include "semantics/semantics.h"
+#include "yaml-cpp/yaml.h"
 
 // ErrorLog
 //
@@ -96,6 +97,26 @@ public:
 	void ImportModule(std::string, std::string, const SourceLocation&) {}
 };
 
+static int compile(std::string path, std::ostream &dest)
+{
+	ErrorLog log;
+	DummyImporter modules;
+	std::ifstream in(path);
+	std::stringstream ss;
+	ss << in.rdbuf();
+	LexerStack tokens(ss.str(), path);
+	ParserStack ast(tokens, log, path);
+	Semantics::Program functions(ast, log, modules, path);
+	YAML::Node doc;
+	while (functions.Next()) {
+		Flowgraph::Function *func = functions.Current();
+		// actually generate something here
+	}
+	if (!log.HasReceivedReport()) {
+		dest << doc;
+	}
+	return log.HasReceivedReport();
+}
 
 int main(int argc, const char *argv[])
 {
@@ -105,19 +126,10 @@ int main(int argc, const char *argv[])
 		std::cerr << "radian-compile: fail: no input files" << std::endl;
 		return EXIT_FAILURE;
 	}
-	ErrorLog log;
-	DummyImporter modules;
+	bool fail = false;
 	for (int i = 1; i < argc; ++i) {
-		// compile the file
-		std::string path(argv[i]);
-		std::ifstream in(path);
-		std::stringstream ss;
-		ss << in.rdbuf();
-		LexerStack tokens(ss.str(), path);
-		ParserStack ast(tokens, log, path);
-		Semantics::Program functions(ast, log, modules, path);
-		// iterate through the sequence of functions, emitting output
+		fail |= compile(argv[i], std::cout);
 	}
-	return log.HasReceivedReport()? EXIT_FAILURE: EXIT_SUCCESS;
+	return fail? EXIT_FAILURE: EXIT_SUCCESS;
 }
 
