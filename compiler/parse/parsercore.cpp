@@ -88,11 +88,18 @@ AST::Expression *Core::OptionalExpression(
 //
 bool Core::Next()
 {
-	bool out = _input.Next();
+	for (;;) {
+		if (!_input.Next()) return false;
+		switch (_input.Current().TokenType()) {
+			case Token::Type::Whitespace:
+			case Token::Type::Comment: continue;
+			default: break;
+		}
+	}
 	if (!_startLoc.IsDefined()) {
 		_startLoc = Current().Location();
 	}
-	return out;
+	return true;
 }
 
 // Core::NextInputToken

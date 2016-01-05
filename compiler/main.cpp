@@ -19,8 +19,6 @@
 #include <string>
 #include "ast/ast.h"
 #include "lex/scanner.h"
-#include "lex/commentfilter.h"
-#include "lex/whitespacefilter.h"
 #include "parse/parser.h"
 #include "parse/blanklinefilter.h"
 #include "parse/blockstacker.h"
@@ -44,27 +42,6 @@ public:
     bool HasReceivedReport() const { return !_empty; }
 private:
     bool _empty;
-};
-
-// LexerStack
-//
-// The scanner reads tokens; the comment filter and whitespace filter strip out
-// tokens which are not semantically meaningful. The output is an acceptable
-// input for the parser stack.
-//
-class LexerStack : public Iterator<Token>
-{
-public:
-	LexerStack( std::string source, std::string filepath ):
-		_scanner(source, filepath),
-		_commentFilter(_scanner),
-		_whitespaceFilter(_commentFilter) {}
-	bool Next() { return _whitespaceFilter.Next(); }
-	Token Current() const { return _whitespaceFilter.Current(); }
-private:
-	Scanner _scanner;
-	CommentFilter _commentFilter;
-	WhitespaceFilter _whitespaceFilter;
 };
 
 // ParserStack
@@ -104,7 +81,7 @@ static int compile(std::string path, std::ostream &dest)
 	std::ifstream in(path);
 	std::stringstream ss;
 	ss << in.rdbuf();
-	LexerStack tokens(ss.str(), path);
+	Scanner tokens(ss.str(), path);
 	ParserStack ast(tokens, log, path);
 	Semantics::Program functions(ast, log, modules, path);
 	YAML::Node doc;
