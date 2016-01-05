@@ -1,3 +1,0 @@
-#!/usr/bin/env bash
-validation/check.sh ./radian validation/suite
-

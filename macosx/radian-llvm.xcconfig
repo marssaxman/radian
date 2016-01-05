@@ -1,4 +1,0 @@
-LLVM_DIR = $(PROJECT_DIR)/../devenv
-
-// Only change this when updating LLVM versions
-LLVM_LD_FLAGS = -lLLVMX86CodeGen -lLLVMX86Desc -lLLVMSelectionDAG -lLLVMAsmPrinter -lLLVMMCParser -lLLVMX86AsmPrinter -lLLVMX86Utils -lLLVMX86Info -lLLVMJIT -lLLVMExecutionEngine -lLLVMCodeGen -lLLVMScalarOpts -lLLVMInstCombine -lLLVMTransformUtils -lLLVMipa -lLLVMAnalysis -lLLVMTarget -lLLVMMC -lLLVMCore -lLLVMSupport -lLLVMLinker
