@@ -19,7 +19,7 @@
 #include <assert.h>
 #include "ast/expression.h"
 #include "ast/binop.h"
-#include "main/error.h"
+#include "error.h"
 #include "flowgraph/node.h"
 
 namespace AST {

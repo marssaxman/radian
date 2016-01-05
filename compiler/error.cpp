@@ -14,7 +14,7 @@
 // Radian. If not, see <http://www.gnu.org/licenses/>.
 
 #include <assert.h>
-#include "main/error.h"
+#include "error.h"
 
 Error::Error( Error::Type::Enum type, const SourceLocation &loc ):
 	_type(type),

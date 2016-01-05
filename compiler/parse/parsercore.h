@@ -19,7 +19,7 @@
 #include "ast/ast.h"
 #include "lex/token.h"
 #include "utility/sequence.h"
-#include "main/error.h"
+#include "error.h"
 
 namespace Parser {
 

@@ -22,7 +22,7 @@
 #include <map>
 #include <queue>
 #include <assert.h>
-#include "main/error.h"
+#include "error.h"
 #include "utility/numtostr.h"
 
 namespace Flowgraph {

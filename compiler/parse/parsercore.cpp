@@ -16,7 +16,7 @@
 #include "parse/parsercore.h"
 #include "parse/expressionparser.h"
 #include "parse/statementparser.h"
-#include "main/error.h"
+#include "error.h"
 
 using namespace Parser;
 

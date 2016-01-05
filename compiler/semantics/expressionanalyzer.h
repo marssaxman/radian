@@ -16,7 +16,7 @@
 #ifndef semantics_expressionanalyzer_h
 #define semantics_expressionanalyzer_h
 
-#include "main/error.h"
+#include "error.h"
 #include "flowgraph/flowgraph.h"
 #include "ast/ast.h"
 #include "semantics/symbols.h"

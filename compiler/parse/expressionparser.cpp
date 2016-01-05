@@ -14,7 +14,7 @@
 // Radian.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "parse/expressionparser.h"
-#include "main/error.h"
+#include "error.h"
 
 using namespace Parser;
 
