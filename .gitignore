@@ -1,4 +1,3 @@
-radian-compile
-obj
-libyaml-cpp.a
-
+bin/
+obj/
+asmjit/libasmjit.a

@@ -14,12 +14,36 @@
 // Radian. If not, see <http://www.gnu.org/licenses/>.
 
 #include <iostream>
+#include <fstream>
+#include <cpptoml.h>
+#include "asmjit.h"
 
 int main(int argc, const char *argv[])
 {
 	// Read in an array of function DFGs, link them together, and write them
 	// out as a bootable kernel image.
-	std::cerr << "radian-link: fail: not yet implemented" << std::endl;
-	return EXIT_FAILURE;
+	if (argc <= 1) {
+		std::cerr << "radian-link: fail: no input files" << std::endl;
+		return EXIT_FAILURE;
+	}
+	asmjit::JitRuntime runtime; // wrong, but it'll do to start out with
+	asmjit::X86Assembler dest(&runtime);
+	for (int i = 1; i < argc; ++i) {
+		using namespace std;
+		using namespace cpptoml;
+		std::string path = argv[i];
+		try {
+			shared_ptr<table> blocks = parse_file(path);
+			assert(blocks->is_table());
+			for (auto iter: *blocks) {
+				// name = iter->first
+				// body = iter->second
+			}
+		} catch (const parse_exception &e) {
+			cerr << "failed to parse " << path << ": " << e.what() << endl;
+			return EXIT_FAILURE;;
+		}
+	}
+	return EXIT_SUCCESS;
 }
 
