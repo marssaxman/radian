@@ -14,7 +14,6 @@
 // Radian. If not, see <http://www.gnu.org/licenses/>.
 
 #include <iostream>
-#include "yaml-cpp/yaml.h"
 
 int main(int argc, const char *argv[])
 {
