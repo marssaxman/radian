@@ -18,6 +18,40 @@
 #include <cpptoml.h>
 #include "asmjit.h"
 
+namespace {
+class linker
+{
+	asmjit::JitRuntime runtime;
+	asmjit::X86Assembler dest;
+	std::map<std::string, asmjit::Label> labels;
+	asmjit::Label find(std::string block)
+	{
+		auto iter = labels.find(block);
+		if (iter != labels.end()) {
+			return iter->second;
+		}
+		asmjit::Label l = dest.newLabel();
+		labels[block] = l;
+		return l;
+	}
+public:
+	linker(): dest(&runtime) {}
+	void load(std::string path)
+	{
+		std::shared_ptr<cpptoml::table> file = cpptoml::parse_file(path);
+		for (auto iter: *file) {
+			dest.bind(find(iter.first));
+			std::shared_ptr<cpptoml::table> block = iter.second->as_table();
+			// resolve "in" to symbol table
+			// resolve "env" to symbol table
+			// evaluate "next"
+			// evaluate "out"
+			// jump to "next"
+		}
+	}
+};
+} // namespace
+
 int main(int argc, const char *argv[])
 {
 	// Read in an array of function DFGs, link them together, and write them
@@ -26,22 +60,14 @@ int main(int argc, const char *argv[])
 		std::cerr << "radian-link: fail: no input files" << std::endl;
 		return EXIT_FAILURE;
 	}
-	asmjit::JitRuntime runtime; // wrong, but it'll do to start out with
-	asmjit::X86Assembler dest(&runtime);
+	linker dest;
 	for (int i = 1; i < argc; ++i) {
-		using namespace std;
-		using namespace cpptoml;
-		std::string path = argv[i];
 		try {
-			shared_ptr<table> blocks = parse_file(path);
-			assert(blocks->is_table());
-			for (auto iter: *blocks) {
-				// name = iter->first
-				// body = iter->second
-			}
-		} catch (const parse_exception &e) {
-			cerr << "failed to parse " << path << ": " << e.what() << endl;
-			return EXIT_FAILURE;;
+			dest.load(argv[i]);
+		} catch (const cpptoml::parse_exception &e) {
+			std::cerr << "failed to parse " << argv[i];
+			std::cerr << ": " << e.what() << std::endl;
+			return EXIT_FAILURE;
 		}
 	}
 	return EXIT_SUCCESS;
