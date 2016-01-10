@@ -18,6 +18,71 @@
 #include <cpptoml.h>
 #include "asmjit.h"
 
+// TYPE SYSTEM
+// for easy indexing and comparison, we will identify types with strings
+//	byte, 'b', uint8_t
+//	index, 'u', uint32_t
+//	fixed, 'i', int64_t
+//	float, 'f', double
+//	array, '[' + element + ']', struct { element *head; element *tail; }
+//	closure, '(' + param + ')' struct { void *env; void(*proc)(param); }
+// structures concatenate a series of fields (using natural alignment),
+// so their type strings are the concatenation of their field type strings
+
+// ABI
+// each block invocation gets a parameter and an environment value
+// parameters are provided in registers, according to type:
+//  byte: AL
+//  index: EAX
+//  fixed: EAX, ECX [low, high]
+//  float: ST0
+//  array: EAX:ECX [head, tail]
+//  closure: EAX:ECX [env, proc]
+//  structure: EAX (passed by address)
+// environment is passed by address in EBP
+// the values of other registers are undefined
+
+// MEMORY
+// allocate memory by decrementing ESP using some even multiple of 4
+// deallocate before jumping to the next block, depending on parameter type:
+// closure, struct, array:
+//	ESP = min(EBP, EAX & ~3)
+// any other type:
+//  ESP = EBP
+
+// OPERATIONS
+// arithmetic
+//	add num* => num
+//  sub num* => num
+//  mul num* => num
+//  quo num, num => num
+//  rem num, num => num
+//  shl int, index => int
+//  shr int, index => int
+// bitwise
+//  and int* => int
+//  or int* => int
+//  xor int* => int
+// comparison
+//  cmp num* => bool ; =
+//  ord num* => bool ; <=
+//  seq num* => bool ; <
+// branching
+//  sel bool, value-true, value-false
+// create compound values
+//  capture <block>, <value> => closure
+//	pack <value> (, value)+ => structure
+//  concat <value> => list
+// lists
+//  first list => value ; first element in the list
+//  take index, list => list ; the first N elements of list
+//  drop index, list => list ; list without its first N elements
+//  last list => value ; last element in the list
+//  item index, list => value ; the Nth item in the list
+//  length list => index ; number of elements in the list
+//  join value* => list
+
+
 namespace {
 class linker
 {
