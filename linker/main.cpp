@@ -16,7 +16,8 @@
 #include <iostream>
 #include <fstream>
 #include <cpptoml.h>
-#include "asmjit.h"
+#include "assembler.h"
+#include "emit.h"
 
 // TYPE SYSTEM
 // for easy indexing and comparison, we will identify types with strings
@@ -50,72 +51,48 @@
 // any other type:
 //  ESP = EBP
 
-// OPERATIONS
-// arithmetic
-//	add num* => num
-//  sub num* => num
-//  mul num* => num
-//  quo num, num => num
-//  rem num, num => num
-//  shl int, index => int
-//  shr int, index => int
-// bitwise
-//  and int* => int
-//  or int* => int
-//  xor int* => int
-// comparison
-//  cmp num* => bool ; =
-//  ord num* => bool ; <=
-//  seq num* => bool ; <
-// branching
-//  sel bool, value-true, value-false
-// create compound values
-//  capture <block>, <value> => closure
-//	pack <value> (, value)+ => structure
-//  concat <value> => list
-// lists
-//  first list => value ; first element in the list
-//  take index, list => list ; the first N elements of list
-//  drop index, list => list ; list without its first N elements
-//  last list => value ; last element in the list
-//  item index, list => value ; the Nth item in the list
-//  length list => index ; number of elements in the list
-//  join value* => list
-
-
 namespace {
 class linker
 {
-	asmjit::JitRuntime runtime;
-	asmjit::X86Assembler dest;
-	std::map<std::string, asmjit::Label> labels;
-	asmjit::Label find(std::string block)
-	{
-		auto iter = labels.find(block);
-		if (iter != labels.end()) {
-			return iter->second;
-		}
-		asmjit::Label l = dest.newLabel();
-		labels[block] = l;
-		return l;
-	}
+	assembler dest;
+	void parse_file(std::shared_ptr<cpptoml::table>);
+	void parse_block(std::shared_ptr<cpptoml::table>);
 public:
-	linker(): dest(&runtime) {}
-	void load(std::string path)
-	{
-		std::shared_ptr<cpptoml::table> file = cpptoml::parse_file(path);
-		for (auto iter: *file) {
-			dest.bind(find(iter.first));
-			std::shared_ptr<cpptoml::table> block = iter.second->as_table();
-			// resolve "in" to symbol table
-			// resolve "env" to symbol table
-			// evaluate "next"
-			// evaluate "out"
-			// jump to "next"
-		}
-	}
+	void load(std::string path);
 };
-} // namespace
+}
+
+void linker::load(std::string path)
+{
+	std::shared_ptr<cpptoml::table> file = cpptoml::parse_file(path);
+	parse_file(file);
+}
+
+void linker::parse_file(std::shared_ptr<cpptoml::table> file)
+{
+	for (auto iter: *file) {
+		dest.bind(iter.first);
+		parse_block(iter.second->as_table());
+	}
+}
+
+void linker::parse_block(std::shared_ptr<cpptoml::table> block)
+{
+	// the block table has five members:
+	//	in - type of the parameter value
+	//	env - type of the environment value
+	//  exp - array of expression nodes
+	//	out - expression to pass along
+	//	next - continuation to invoke
+	emit::block d;
+	d.in_type = block->get_as<std::string>("in").value_or("");
+	d.env_type = block->get_as<std::string>("env").value_or("");
+	d.out_exp = *block->get_as<int64_t>("out");
+	d.next_exp = *block->get_as<int64_t>("next");
+	for (auto exp: *block->get("exp")->as_array()) {
+	}
+	emit(d, dest);
+}
 
 int main(int argc, const char *argv[])
 {
