@@ -23,7 +23,7 @@ bin/link: $(LINKER_OBJS) asmjit/libasmjit.a
 	g++ -o $@ $^
 obj/linker/%.o: linker/%.cpp
 	@mkdir -p $(@D)
-	$(CC) -Ilinker -Icpptoml/include -Iasmjit $(CXXFLAGS) -c $< -o $@
+	$(CC) -Ilinker -Iasmjit $(CXXFLAGS) -c $< -o $@
 
 asmjit/libasmjit.a:
 	$(MAKE) -C asmjit

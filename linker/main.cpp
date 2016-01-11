@@ -15,9 +15,7 @@
 
 #include <iostream>
 #include <fstream>
-#include <cpptoml.h>
 #include "assembler.h"
-#include "emit.h"
 
 // TYPE SYSTEM
 // for easy indexing and comparison, we will identify types with strings
@@ -55,8 +53,6 @@ namespace {
 class linker
 {
 	assembler dest;
-	void parse_file(std::shared_ptr<cpptoml::table>);
-	void parse_block(std::shared_ptr<cpptoml::table>);
 public:
 	void load(std::string path);
 };
@@ -64,34 +60,17 @@ public:
 
 void linker::load(std::string path)
 {
-	std::shared_ptr<cpptoml::table> file = cpptoml::parse_file(path);
-	parse_file(file);
-}
-
-void linker::parse_file(std::shared_ptr<cpptoml::table> file)
-{
-	for (auto iter: *file) {
-		dest.bind(iter.first);
-		parse_block(iter.second->as_table());
-	}
-}
-
-void linker::parse_block(std::shared_ptr<cpptoml::table> block)
-{
-	// the block table has five members:
-	//	in - type of the parameter value
-	//	env - type of the environment value
-	//  exp - array of expression nodes
-	//	out - expression to pass along
-	//	next - continuation to invoke
-	emit::block d;
-	d.in_type = block->get_as<std::string>("in").value_or("");
-	d.env_type = block->get_as<std::string>("env").value_or("");
-	d.out_exp = *block->get_as<int64_t>("out");
-	d.next_exp = *block->get_as<int64_t>("next");
-	for (auto exp: *block->get("exp")->as_array()) {
-	}
-	emit(d, dest);
+	// syntax
+	// a file is composed of lines separated by '\n'
+	// if present, a ';' char divides instructions (left) from comment (right)
+	// instructions are tokens separated by whitespace
+	// a token is a sequence of isgraph() chars
+	// whitespace is a sequence of isspace() chars other than '\n'
+	// within a file, lines are processed from top to bottom
+	// within a line, tokens are processed from right to left
+	// tokens perform operations on a notional stack machine
+	// tokens which begin with an ispunct() char represent values or directives 
+	// other tokens represent the names of commands to perform
 }
 
 int main(int argc, const char *argv[])
@@ -104,13 +83,7 @@ int main(int argc, const char *argv[])
 	}
 	linker dest;
 	for (int i = 1; i < argc; ++i) {
-		try {
-			dest.load(argv[i]);
-		} catch (const cpptoml::parse_exception &e) {
-			std::cerr << "failed to parse " << argv[i];
-			std::cerr << ": " << e.what() << std::endl;
-			return EXIT_FAILURE;
-		}
+		dest.load(argv[i]);
 	}
 	return EXIT_SUCCESS;
 }
