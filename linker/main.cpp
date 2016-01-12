@@ -17,6 +17,7 @@
 #include <fstream>
 #include "assembler.h"
 #include "dfg.h"
+#include "logstream.h"
 
 // TYPE SYSTEM
 // for easy indexing and comparison, we will identify types with strings
@@ -54,19 +55,16 @@ int main(int argc, const char *argv[])
 {
 	// Read in an array of function DFGs, link them together, and write them
 	// out as a bootable kernel image.
+	logstream masterlog("radian-link", std::cerr);
 	if (argc <= 1) {
-		std::cerr << "radian-link: fail: no input files" << std::endl;
-		return EXIT_FAILURE;
+		masterlog << "no input files" << std::endl;
 	}
-	std::cerr << std::showbase;
-	DFG dfg;
-	bool valid = true;
 	for (int i = 1; i < argc; ++i) {
 		std::string path(argv[i]);
-		std::ifstream file(path);
-		dfg.read(path, file);
-		valid &= dfg.valid();
+		std::ifstream filesrc(path);
+		logstream filelog(path, masterlog);
+		DFG dfg(filesrc, filelog);
 	}
-	return valid? EXIT_SUCCESS: EXIT_FAILURE;
+	return masterlog.empty()? EXIT_SUCCESS: EXIT_FAILURE;
 }
 

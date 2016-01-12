@@ -17,10 +17,7 @@
 
 std::ostream &DFG::fail()
 {
-	parse.valid = false;
-	std::cerr << parse.path << ":" << std::dec;
-	std::cerr << parse.line << ":" << parse.column << ": ";
-	return std::cerr;
+	return log << std::dec << parse.line << ":" << parse.column << ": ";
 }
 
 void DFG::read_op(std::string op)
@@ -45,11 +42,6 @@ void DFG::read_term(char prefix, std::string body)
 	default:
 		fail() << "undefined prefix \'" << prefix << "\'" << std::endl;
 	}
-}
-
-void DFG::read_token(std::string token)
-{
-	std::cout << token << " ";
 }
 
 void DFG::read_line(std::string line)
@@ -85,7 +77,8 @@ void DFG::read_line(std::string line)
 	}
 }
 
-void DFG::read(std::string name, std::istream &src)
+DFG::DFG(std::istream &src, std::ostream &log):
+	log(log)
 {
 	// A serialized DFG is a text file composed of lines containing tokens.
 	// A line consists of a sequence of zero or more tokens followed by an
@@ -93,9 +86,8 @@ void DFG::read(std::string name, std::istream &src)
 	// Tokens are sequences of isgraph() delimited by sequences of isspace().
 	// Lines are evaluated top to bottom, tokens are evaluated right to left.
 	// We will extract the tokens from this stream and eval() them in order.
-	parse.path = name;
-	parse.line = 1;
-	for (std::string line; std::getline(src, line); ++parse.line) {
+	int index = 1;
+	for (std::string line; std::getline(src, line); ++index) {
 		read_line(line);
 	}
 }

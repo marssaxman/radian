@@ -13,27 +13,29 @@
 // You should have received a copy of the GNU General Public License along with
 // Radian. If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef DFG_H
-#define DFG_H
+#ifndef LOGSTREAM_H
+#define LOGSTREAM_H
 
-#include <string>
 #include <iostream>
 
-class DFG
+class prefixbuf: public std::streambuf
 {
-	struct {
-		size_t line = 0;
-		size_t column = 0;
-		bool valid = true;
-	} parse;
-	std::ostream &log;
-	std::ostream &fail();
-	void read_op(std::string instruction);
-	void read_term(char prefix, std::string body);
-	void read_line(std::string text);
+	std::string prefix;
+	std::streambuf *dest;
+	bool ready = true;
+	bool has_written = false;
+	int sync();
+	int overflow(int c);
 public:
-	DFG(std::istream &src, std::ostream &log);
+	prefixbuf(const std::string &prefix, std::streambuf *dest);
+	bool empty() const { return !has_written; }
 };
 
-#endif //DFG_H
+class logstream : private virtual prefixbuf, public std::ostream
+{
+public:
+	logstream(const std::string &prefix, std::ostream &dest);
+	bool empty() const { return prefixbuf::empty(); }
+};
 
+#endif //LOGSTREAM_H
