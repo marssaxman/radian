@@ -38,10 +38,6 @@ prefixbuf::prefixbuf(const std::string &_prefix, std::streambuf *_dest):
 	prefix(_prefix),
 	dest(_dest)
 {
-	if (!prefix.empty()) {
-		prefix.push_back(':');
-		prefix.push_back(' ');
-	}
 }
 
 logstream::logstream(const std::string &prefix, std::ostream &dest):

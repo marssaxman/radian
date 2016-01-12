@@ -15,36 +15,53 @@
 
 #include "dfg.h"
 
-std::ostream &DFG::fail()
+void dfg::reader::fail(std::string msg)
 {
-	return log << std::dec << parse.line << ":" << parse.column << ": ";
+	using namespace std;
+	err << dec << pos.line << ":" << pos.column << ": " << msg << endl;
 }
 
-void DFG::read_op(std::string op)
+void dfg::reader::literal(std::string text)
 {
-	// operation categories:
-	// source - push 1
-	// sink - pop 1
-	// unary - pop 1, push 1
-	// binary - pop 2, push 1
-	// ternary - pop 3, push 1
-	// variable - pop 1 + N, push 1
-	fail() << "undefined operation \"" << op << "\"" << std::endl;
+	if (text.size() > 16) {
+		fail("oversize literal");
+	}
+	int64_t value = 0;
+	for (char c: text) {
+		value <<= 4;
+		if (c >= '0' && c <= '9') {
+			value += (c - '0') + 0x0;
+		} else if (c >= 'a' && c <= 'f') {
+			value += (c - 'a') + 0xA;
+		} else if (c >= 'A' && c <= 'F') {
+			value += (c - 'A') + 0xA;
+		} else {
+			fail("illegal hex digit '" + std::string(1, c) + "'");
+			break;
+		}
+	}
+	current.nodes.emplace_back(new dfg::literal(value));
+	stack = current.nodes.size();
 }
 
-void DFG::read_term(char prefix, std::string body)
+void dfg::reader::token(std::string text)
 {
-	switch (prefix) {
-	case '@': // block
-	case '%': // symbol
-	case '$': // literal
-	case '=': // type
-	default:
-		fail() << "undefined prefix \'" << prefix << "\'" << std::endl;
+	// Figure out what an input token means. 
+	// Tokens which begin with a punctuation character have special meaning;
+	// other tokens are instruction names.
+	char c = text.front();
+	if (ispunct(c)) {
+		std::string body = text.substr(1);
+		switch (c) {
+			case '$': literal(body); break;
+			default: fail("unknown token prefix '" + std::string(1, c) + "'");
+		}
+	} else {
+		fail("undefined operation \"" + text + "\"");
 	}
 }
 
-void DFG::read_line(std::string line)
+void dfg::reader::line(std::string line)
 {
 	// Truncate the line at the comment, if present.
 	size_t end = line.size();
@@ -63,12 +80,8 @@ void DFG::read_line(std::string line)
 		} while (start > 0);
 		if (start < end) {
 			// If we found a token, go process it.
-			char c = line[start];
-			if (ispunct(c)) {
-				read_term(c, line.substr(start + 1, end - start - 1));
-			} else {
-				read_op(line.substr(start, end - start));
-			}
+			pos.column = start;
+			token(line.substr(start, end - start));
 			end = start;
 		} else {
 			// If what we found was not a token, skip it.
@@ -77,8 +90,9 @@ void DFG::read_line(std::string line)
 	}
 }
 
-DFG::DFG(std::istream &src, std::ostream &log):
-	log(log)
+dfg::reader::reader(dfg &_dest, std::istream &src, std::ostream &_err):
+	dest(_dest),
+	err(_err)
 {
 	// A serialized DFG is a text file composed of lines containing tokens.
 	// A line consists of a sequence of zero or more tokens followed by an
@@ -86,10 +100,14 @@ DFG::DFG(std::istream &src, std::ostream &log):
 	// Tokens are sequences of isgraph() delimited by sequences of isspace().
 	// Lines are evaluated top to bottom, tokens are evaluated right to left.
 	// We will extract the tokens from this stream and eval() them in order.
-	int index = 1;
-	for (std::string line; std::getline(src, line); ++index) {
-		read_line(line);
+	pos.line = 1;
+	for (std::string text; std::getline(src, text); ++pos.line) {
+		line(text);
 	}
 }
 
+void dfg::read(std::istream &src, std::ostream &err)
+{
+	reader(*this, src, err);
+}
 

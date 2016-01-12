@@ -55,16 +55,17 @@ int main(int argc, const char *argv[])
 {
 	// Read in an array of function DFGs, link them together, and write them
 	// out as a bootable kernel image.
-	logstream masterlog("radian-link", std::cerr);
+	logstream log(std::string(argv[0]) + ": ", std::cerr);
 	if (argc <= 1) {
-		masterlog << "no input files" << std::endl;
+		log << "no input files" << std::endl;
 	}
+	dfg data;
 	for (int i = 1; i < argc; ++i) {
 		std::string path(argv[i]);
-		std::ifstream filesrc(path);
-		logstream filelog(path, masterlog);
-		DFG dfg(filesrc, filelog);
+		std::ifstream src(path);
+		logstream err(path + ":", log);
+		data.read(src, err);
 	}
-	return masterlog.empty()? EXIT_SUCCESS: EXIT_FAILURE;
+	return log.empty()? EXIT_SUCCESS: EXIT_FAILURE;
 }
 

@@ -18,21 +18,49 @@
 
 #include <string>
 #include <iostream>
+#include <memory>
+#include <vector>
+#include <map>
 
-class DFG
+class dfg
 {
-	struct {
-		size_t line = 0;
-		size_t column = 0;
-		bool valid = true;
-	} parse;
-	std::ostream &log;
-	std::ostream &fail();
-	void read_op(std::string instruction);
-	void read_term(char prefix, std::string body);
-	void read_line(std::string text);
 public:
-	DFG(std::istream &src, std::ostream &log);
+	class node
+	{
+	public:
+		virtual ~node() {}
+	};
+	class literal : public node
+	{
+		int64_t value;
+	public:
+		literal(int64_t v): value(v) {}
+	};
+	class block
+	{
+	public:
+		std::vector<std::unique_ptr<node>> nodes;
+	};
+	void read(std::istream &src, std::ostream &log);
+private:
+	std::map<std::string, std::unique_ptr<block>> blocks;
+	class reader
+	{
+		struct {
+			size_t line = 1;
+			size_t column = 0;
+		} pos;
+		std::ostream &err;
+		dfg &dest;
+		block current;
+		size_t stack = 0;
+		void fail(std::string message);
+		void literal(std::string body);
+		void token(std::string token);
+		void line(std::string text);
+	public:
+		reader(dfg &dest, std::istream &src, std::ostream &err);
+	};
 };
 
 #endif //DFG_H
