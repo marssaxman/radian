@@ -91,7 +91,50 @@ void dfg::reader::token(std::string text)
 			default: fail("unknown token prefix '" + std::string(1, c) + "'");
 		}
 	} else {
-		fail("undefined operation \"" + text + "\"");
+		struct op
+		{
+			enum { unary = 1, binary = 2, ternary = 3, variadic = 0 } arity;
+			node::type type;
+		};
+		static std::map<std::string, op> operators = {
+			{"not", {op::unary, node::not_}},
+			{"test", {op::unary, node::test_}},
+			{"null", {op::unary, node::null_}},
+			{"size", {op::unary, node::size_}},
+			{"head", {op::unary, node::head_}},
+			{"tail", {op::unary, node::tail_}},
+			{"last", {op::unary, node::last_}},
+			{"add", {op::binary, node::add_}},
+			{"sub", {op::binary, node::sub_}},
+			{"mul", {op::binary, node::mul_}},
+			{"div", {op::binary, node::div_}},
+			{"quo", {op::binary, node::quo_}},
+			{"rem", {op::binary, node::rem_}},
+			{"shl", {op::binary, node::shl_}},
+			{"shr", {op::binary, node::shr_}},
+			{"and", {op::binary, node::and_}},
+			{"orl", {op::binary, node::orl_}},
+			{"xor", {op::binary, node::xor_}},
+			{"ceq", {op::binary, node::ceq_}},
+			{"cne", {op::binary, node::cne_}},
+			{"clt", {op::binary, node::clt_}},
+			{"cgt", {op::binary, node::cgt_}},
+			{"cle", {op::binary, node::cle_}},
+			{"cge", {op::binary, node::cge_}},
+			{"take", {op::binary, node::take_}},
+			{"drop", {op::binary, node::drop_}},
+			{"item", {op::binary, node::item_}},
+			{"sel", {op::ternary, node::sel_}},
+			{"pack", {op::variadic, node::pack_}},
+			{"bind", {op::variadic, node::bind_}},
+			{"join", {op::variadic, node::join_}},
+		};
+		auto iter = operators.find(text);
+		if (iter != operators.end()) {
+			// do something useful
+		} else {
+			fail("undefined operation \"" + text + "\"");
+		}
 	}
 }
 
