@@ -16,7 +16,7 @@
 #include <iostream>
 #include <fstream>
 #include "assembler.h"
-#include "dfg.h"
+#include "reader.h"
 #include "logstream.h"
 
 // TYPE SYSTEM
@@ -59,12 +59,12 @@ int main(int argc, const char *argv[])
 	if (argc <= 1) {
 		log << "no input files" << std::endl;
 	}
-	dfg data;
+	dfg::unit data;
 	for (int i = 1; i < argc; ++i) {
 		std::string path(argv[i]);
 		std::ifstream src(path);
 		logstream err(path + ":", log);
-		data.read(src, err);
+		dfg::reader(data, src, err);
 	}
 	return log.empty()? EXIT_SUCCESS: EXIT_FAILURE;
 }
