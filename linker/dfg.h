@@ -26,7 +26,7 @@ namespace dfg {
 
 struct node
 {
-	enum type {
+	enum kind {
 		error_ = 0,
 		// atoms
 		lit_, inp_, env_, reloc_,
@@ -45,7 +45,7 @@ struct node
 		// variadic
 		pack_, join_,
 	} id;
-	node(type t): id(t) {}
+	node(kind t): id(t) {}
 };
 
 struct dummy: public node { dummy(): node(error_) {} };
@@ -68,9 +68,10 @@ struct reloc: public node
 
 struct operation: public node
 {
+	std::string type;
 	std::vector<const node*> inputs;
-	operation(type t, const std::vector<const node*> &i):
-		node(t), inputs(i) {}
+	operation(kind k, std::string t, const std::vector<const node*> &i):
+		node(k), type(t), inputs(i) {}
 };
 
 class unit

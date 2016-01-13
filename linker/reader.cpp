@@ -75,6 +75,14 @@ const dfg::node *dfg::reader::terminal(char c, std::string body)
 
 const dfg::node *dfg::reader::operation(std::string text)
 {
+	// An operation name may have a period-delimited type suffix.
+	std::string type;
+	size_t dotpos = text.find_last_of('.');
+	if (dotpos > 0 && dotpos != std::string::npos) {
+		type = text.substr(dotpos + 1);
+		text.resize(dotpos);
+	}
+	// Look the name up to see how many inputs we expect it to have.
 	struct op {
 		enum {
 			nullary = 0,
@@ -83,7 +91,7 @@ const dfg::node *dfg::reader::operation(std::string text)
 			ternary = 3,
 			variadic = -1
 		} arity;
-		node::type type;
+		node::kind id;
 	};
 	static std::map<std::string, op> operators = {
 		{"inp", {op::nullary, node::inp_}},
@@ -149,7 +157,7 @@ const dfg::node *dfg::reader::operation(std::string text)
 	auto argiter = stack.end() - argc;
 	std::vector<const node *> inputs(argiter, stack.end());
 	stack.erase(argiter, stack.end());
-	return dest.make<dfg::operation>(which.type, inputs);
+	return dest.make<dfg::operation>(which.id, type, inputs);
 }
 
 const dfg::node *dfg::reader::token(std::string text)
