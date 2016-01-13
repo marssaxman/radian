@@ -15,34 +15,19 @@
 
 #include "reader.h"
 
-const dfg::node *dfg::reader::top()
-{
-	if (stack.empty()) {
-		fail("stack underflow");
-		push(current->add<dummy>());
-	}
-	return stack.back();
-}
-
-const dfg::node *dfg::reader::pop()
-{
-	auto out = top();
-	stack.pop_back();
-	return out;
-}
-
-void dfg::reader::push(const dfg::node *n)
-{
-	stack.push_back(n);
-}
-
 void dfg::reader::fail(std::string msg)
 {
 	using namespace std;
 	err << dec << loc.line << ":" << loc.column << ": " << msg << endl;
 }
 
-void dfg::reader::literal(std::string text)
+const dfg::node *dfg::reader::error(std::string msg)
+{
+	fail(msg);
+	return dest.make<dummy>();
+}
+
+const dfg::node *dfg::reader::literal(std::string text)
 {
 	if (text.size() > 16) {
 		fail("oversize literal");
@@ -61,80 +46,116 @@ void dfg::reader::literal(std::string text)
 			break;
 		}
 	}
-	push(current->add<dfg::literal>(value));
+	return dest.make<dfg::literal>(value);
 }
 
-void dfg::reader::symbol(std::string name)
+const dfg::node *dfg::reader::symbol(std::string name)
 {
 	auto iter = symbols.find(name);
-	const dfg::node *out = nullptr;
 	if (iter != symbols.end()) {
-		out = iter->second;
-	} else {
-		fail("undefined symbol \"" + name + "\"");
-		symbols[name] = out = current->add<dummy>();
+		return iter->second;
 	}
-	push(out);
+	return error("undefined symbol \"" + name + "\"");
 }
 
-void dfg::reader::token(std::string text)
+const dfg::node *dfg::reader::terminal(char c, std::string body)
+{
+	switch (c) {
+		case '$': return literal(body); break;
+		case '%': return symbol(body); break;
+		default: return error("unknown prefix '" + std::string(1, c) + "'");
+	}
+}
+
+const dfg::node *dfg::reader::operation(std::string text)
+{
+	struct op {
+		enum {
+			nullary = 0,
+			unary = 1,
+			binary = 2,
+			ternary = 3,
+			variadic = -1
+		} arity;
+		node::type type;
+	};
+	static std::map<std::string, op> operators = {
+		{"inp", {op::nullary, node::inp_}},
+		{"env", {op::nullary, node::env_}},
+		{"not", {op::unary, node::not_}},
+		{"neg", {op::unary, node::neg_}},
+		{"null", {op::unary, node::null_}},
+		{"size", {op::unary, node::size_}},
+		{"head", {op::unary, node::head_}},
+		{"tail", {op::unary, node::tail_}},
+		{"last", {op::unary, node::last_}},
+		{"jump", {op::unary, node::jump_}},
+		{"add", {op::binary, node::add_}},
+		{"sub", {op::binary, node::sub_}},
+		{"mul", {op::binary, node::mul_}},
+		{"div", {op::binary, node::div_}},
+		{"quo", {op::binary, node::quo_}},
+		{"rem", {op::binary, node::rem_}},
+		{"shl", {op::binary, node::shl_}},
+		{"shr", {op::binary, node::shr_}},
+		{"and", {op::binary, node::and_}},
+		{"orl", {op::binary, node::orl_}},
+		{"xor", {op::binary, node::xor_}},
+		{"ceq", {op::binary, node::ceq_}},
+		{"cne", {op::binary, node::cne_}},
+		{"clt", {op::binary, node::clt_}},
+		{"cgt", {op::binary, node::cgt_}},
+		{"cle", {op::binary, node::cle_}},
+		{"cge", {op::binary, node::cge_}},
+		{"take", {op::binary, node::take_}},
+		{"drop", {op::binary, node::drop_}},
+		{"item", {op::binary, node::item_}},
+		{"bind", {op::binary, node::bind_}},
+		{"call", {op::binary, node::call_}},
+		{"sel", {op::ternary, node::sel_}},
+		{"pack", {op::variadic, node::pack_}},
+		{"join", {op::variadic, node::join_}},
+	};
+	auto opiter = operators.find(text);
+	if (opiter == operators.end()) {
+		return error("undefined operation \"" + text + "\"");
+	}
+	auto which = opiter->second;
+	// retrieve arguments for this operation according to its arity
+	int64_t argc = 0;
+	if (op::variadic == which.arity) {
+		if (stack.empty()) {
+			return error("stack underflow; variadic operator requires count");
+		}
+		if (stack.back()->id != node::lit_) {
+			return error("variadic operator count must be integer literal");
+		}
+		argc = static_cast<const dfg::literal*>(stack.back())->value;
+		if (argc < 0) {
+			return error("variadic operator count must not be negative");
+		}
+		if (argc > stack.size()) {
+			return error("stack underflow: not enough values available");
+		}
+	} else {
+		argc = which.arity;
+	}
+	auto argiter = stack.end() - argc;
+	std::vector<const node *> inputs(argiter, stack.end());
+	stack.erase(argiter, stack.end());
+	return dest.make<dfg::operation>(which.type, inputs);
+}
+
+const dfg::node *dfg::reader::token(std::string text)
 {
 	// Figure out what an input token means. 
 	// Tokens which begin with a punctuation character have special meaning;
 	// other tokens are instruction names.
 	char c = text.front();
 	if (ispunct(c)) {
-		std::string body = text.substr(1);
-		switch (c) {
-			case '$': literal(body); break;
-			case '%': symbol(body); break;
-			default: fail("unknown token prefix '" + std::string(1, c) + "'");
-		}
+		return terminal(c, text.substr(1));
 	} else {
-		struct op
-		{
-			enum { unary = 1, binary = 2, ternary = 3, variadic = 0 } arity;
-			node::type type;
-		};
-		static std::map<std::string, op> operators = {
-			{"not", {op::unary, node::not_}},
-			{"test", {op::unary, node::test_}},
-			{"null", {op::unary, node::null_}},
-			{"size", {op::unary, node::size_}},
-			{"head", {op::unary, node::head_}},
-			{"tail", {op::unary, node::tail_}},
-			{"last", {op::unary, node::last_}},
-			{"add", {op::binary, node::add_}},
-			{"sub", {op::binary, node::sub_}},
-			{"mul", {op::binary, node::mul_}},
-			{"div", {op::binary, node::div_}},
-			{"quo", {op::binary, node::quo_}},
-			{"rem", {op::binary, node::rem_}},
-			{"shl", {op::binary, node::shl_}},
-			{"shr", {op::binary, node::shr_}},
-			{"and", {op::binary, node::and_}},
-			{"orl", {op::binary, node::orl_}},
-			{"xor", {op::binary, node::xor_}},
-			{"ceq", {op::binary, node::ceq_}},
-			{"cne", {op::binary, node::cne_}},
-			{"clt", {op::binary, node::clt_}},
-			{"cgt", {op::binary, node::cgt_}},
-			{"cle", {op::binary, node::cle_}},
-			{"cge", {op::binary, node::cge_}},
-			{"take", {op::binary, node::take_}},
-			{"drop", {op::binary, node::drop_}},
-			{"item", {op::binary, node::item_}},
-			{"sel", {op::ternary, node::sel_}},
-			{"pack", {op::variadic, node::pack_}},
-			{"bind", {op::variadic, node::bind_}},
-			{"join", {op::variadic, node::join_}},
-		};
-		auto iter = operators.find(text);
-		if (iter != operators.end()) {
-			// do something useful
-		} else {
-			fail("undefined operation \"" + text + "\"");
-		}
+		return operation(text);
 	}
 }
 
@@ -154,11 +175,11 @@ void dfg::reader::eval(std::string text)
 			if (isblank(c) || !isgraph(c)) break;
 			--start;
 		} while (start > 0);
-		if (start < end) {
+		size_t len = end - start;
+		if (len > 0) {
 			// If we found a token, go process it.
-			loc.column = start;
-			token(text.substr(start, end - start));
-			end = start;
+			loc.column = end = start;
+			stack.push_back(token(text.substr(start, len)));
 		} else {
 			// If what we found was not a token, skip it.
 			--end;
@@ -196,16 +217,18 @@ void dfg::reader::line(std::string text)
 	if (!defsym.empty()) {
 		if (symbols.find(defsym) != symbols.end()) {
 			fail("redefined symbol \"" + defsym + "\"");
-			return;
 		}
-		symbols[defsym] = top();
+		if (!stack.empty()) {
+			symbols[defsym] = stack.back();
+		} else {
+			fail("stack underflow");
+		}
 	}
 }
 
 dfg::reader::reader(dfg::unit &_dest, std::istream &src, std::ostream &_err):
 	err(_err),
-	dest(_dest),
-	current(_dest.add())
+	dest(_dest)
 {
 	// A serialized DFG is a text file composed of lines containing tokens.
 	// A line consists of a sequence of zero or more tokens followed by an
@@ -213,8 +236,9 @@ dfg::reader::reader(dfg::unit &_dest, std::istream &src, std::ostream &_err):
 	// Tokens are sequences of isgraph() delimited by sequences of isspace().
 	// Lines are evaluated top to bottom, tokens are evaluated right to left.
 	// We will extract the tokens from this stream and eval() them in order.
-	loc.line = 1;
-	for (std::string text; std::getline(src, text); ++loc.line) {
+	for (std::string text; std::getline(src, text);) {
+		++loc.line;
+		loc.column = 0;
 		line(text);
 	}
 }

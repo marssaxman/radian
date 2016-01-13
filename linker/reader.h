@@ -26,21 +26,20 @@ namespace dfg {
 class reader
 {
 	struct {
-		size_t line = 1;
+		size_t line = 0;
 		size_t column = 0;
 	} loc;
 	std::ostream &err;
 	unit &dest;
-	block *current;
 	std::vector<const node*> stack;
 	std::map<std::string, const node*> symbols;
-	const node *top();
-	const node *pop();
-	void push(const node*);
 	void fail(std::string message);
-	void literal(std::string body);
-	void symbol(std::string name);
-	void token(std::string token);
+	const node *error(std::string message);
+	const node *literal(std::string body);
+	const node *symbol(std::string name);
+	const node *terminal(char prefix, std::string body);
+	const node *operation(std::string text);
+	const node *token(std::string token);
 	void eval(std::string text);
 	void line(std::string text);
 public:

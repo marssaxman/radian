@@ -15,8 +15,4 @@
 
 #include "dfg.h"
 
-dfg::block *dfg::unit::add()
-{
-	blocks.emplace_back(new block);
-	return blocks.back().get();
-}
+

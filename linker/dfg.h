@@ -27,26 +27,28 @@ namespace dfg {
 struct node
 {
 	enum type {
-		nil_ = 0,
+		error_ = 0,
 		// atoms
 		lit_, inp_, env_,
 		// unary
-		not_, test_,
+		not_, neg_,
 		null_, size_, head_, tail_, last_,
+		jump_,
 		// binary
 		add_, sub_, mul_, div_, quo_, rem_,
 		shl_, shr_, and_, orl_, xor_,
 		ceq_, cne_, clt_, cgt_, cle_, cge_,
 		take_, drop_, item_,
+		bind_, call_,
 		// ternary
 		sel_,
 		// variadic
-		pack_, bind_, join_,
+		pack_, join_,
 	} id;
 	node(type t): id(t) {}
 };
 
-struct dummy: public node { dummy(): node(nil_) {} };
+struct dummy: public node { dummy(): node(error_) {} };
 struct inp: public node { inp(): node(inp_) {} };
 struct env: public node { env(): node(env_) {} };
 
@@ -60,30 +62,21 @@ struct literal: public node
 struct operation: public node
 {
 	std::vector<const node*> inputs;
-	operation(type t, std::vector<const node*> &&i):
-		node(t), inputs(std::move(i)) {}
-};
-
-class block
-{
-	std::vector<std::unique_ptr<node>> nodes;
-public:
-	template<typename T, typename... A>
-	const node* add(A... a)
-	{
-		nodes.emplace_back(new T(a...));
-		return nodes.back().get();
-	}
-	bool empty() const { return nodes.empty(); }
-	const node* root() const { return nodes.back().get(); }
+	operation(type t, const std::vector<const node*> &i):
+		node(t), inputs(i) {}
 };
 
 class unit
 {
-	std::vector<std::unique_ptr<block>> blocks;
+	std::vector<std::unique_ptr<node>> nodes;
 public:
 	unit() {}
-	block *add();
+	template<typename T, typename... A>
+	const node* make(A... a)
+	{
+		nodes.emplace_back(new T(a...));
+		return nodes.back().get();
+	}
 };
 
 } // namespace dfg
