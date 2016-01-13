@@ -29,7 +29,7 @@ struct node
 	enum type {
 		error_ = 0,
 		// atoms
-		lit_, inp_, env_,
+		lit_, inp_, env_, reloc_,
 		// unary
 		not_, neg_,
 		null_, size_, head_, tail_, last_,
@@ -59,6 +59,13 @@ struct literal: public node
 		node(lit_), value(v) {}
 };
 
+struct reloc: public node
+{
+	std::string name;
+	reloc(std::string n):
+		node(reloc_), name(n) {}
+};
+
 struct operation: public node
 {
 	std::vector<const node*> inputs;
@@ -69,6 +76,7 @@ struct operation: public node
 class unit
 {
 	std::vector<std::unique_ptr<node>> nodes;
+	std::map<std::string, const node*> blocks;
 public:
 	unit() {}
 	template<typename T, typename... A>
@@ -76,6 +84,10 @@ public:
 	{
 		nodes.emplace_back(new T(a...));
 		return nodes.back().get();
+	}
+	void define(std::string name, const node *exp)
+	{
+		blocks[name] = exp;
 	}
 };
 

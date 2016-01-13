@@ -19,16 +19,21 @@
 #include "reader.h"
 #include "logstream.h"
 
-// TYPE SYSTEM
-// for easy indexing and comparison, we will identify types with strings
-//	byte, 'b', uint8_t
-//	index, 'u', uint32_t
-//	fixed, 'i', int64_t
-//	float, 'f', double
-//	array, '[' + element + ']', struct { element *head; element *tail; }
-//	closure, '(' + param + ')' struct { void *env; void(*proc)(param); }
-// structures concatenate a series of fields (using natural alignment),
-// so their type strings are the concatenation of their field type strings
+// NAME MANGLING
+// one char for each atom, delimiter pairs for compound types:
+//  b = byte, s = short, w = word, l = long
+//  f = float, d = double
+// a structure simply concatenates its field types
+// a nested structure is wrapped in '{' and '}'
+// an array wraps its element type in '[' and ']'
+// a closure wraps its parameter type in '(' and ')' 
+
+// MEMORY LAYOUT
+// structure fields use natural alignment in order
+// arrays are a struct describing a range of elements:
+// template<typename T> struct array<T>{ T *head; T *tail; };
+// a closure combines a proc ptr and an environment value:
+//	struct { void *env; void(*proc)(param); }
 
 // ABI
 // each block invocation gets a parameter and an environment value

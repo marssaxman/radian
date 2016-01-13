@@ -58,11 +58,17 @@ const dfg::node *dfg::reader::symbol(std::string name)
 	return error("undefined symbol \"" + name + "\"");
 }
 
+const dfg::node *dfg::reader::reloc(std::string name)
+{
+	return dest.make<dfg::reloc>(name);
+}
+
 const dfg::node *dfg::reader::terminal(char c, std::string body)
 {
 	switch (c) {
 		case '$': return literal(body); break;
 		case '%': return symbol(body); break;
+		case '@': return reloc(body); break;
 		default: return error("unknown prefix '" + std::string(1, c) + "'");
 	}
 }
@@ -187,11 +193,11 @@ void dfg::reader::eval(std::string text)
 	}
 }
 
-void dfg::reader::line(std::string text)
+void dfg::reader::stmt(std::string text)
 {
-	// A line may have a definition, a body, and/or a comment.
+	// A statement may have label, a body, and/or a comment.
 	// If the first token on the line ends with a colon, that token is a
-	// symbol definition.
+	// local symbol definition.
 	size_t start = 0;
 	while (start < text.size() && isblank(text[start])) {
 		++start;
@@ -226,6 +232,61 @@ void dfg::reader::line(std::string text)
 	}
 }
 
+void dfg::reader::end_block()
+{
+	if (block_name.empty()) {
+		return;
+	}
+	if (!stack.empty()) {
+		dest.define(block_name, stack.back());
+		stack.clear();
+	} else {
+		fail("identifier " + block_name + " defines an empty block");
+	}
+	symbols.clear();
+	block_name.clear();
+}
+
+void dfg::reader::decl(std::string text)
+{
+	// A declaration begins with a name, may have parameters, and marks the
+	// end of the previous block and the beginning of a new one.
+	end_block();
+	size_t pos = 0;
+	while (pos < text.size()) {
+		char c = text[pos];
+		if (isblank(c)) break;
+		if (!isgraph(c)) break;
+		++pos;
+	}
+	block_name = text.substr(0, pos);
+	while (pos < text.size()) {
+		char c = text[pos];
+		if (';' == c) return;
+		if (!isblank(c)) {
+			loc.column = pos;
+			fail("unknown token on declaration line");
+			return;
+		}
+		++pos;
+	}
+}
+
+void dfg::reader::line(std::string text)
+{
+	// If the line begins with text, it is a top-level declaration.
+	// If the line begins with whitespace, it is a statement which continues
+	// the current top-level block.
+	if (text.empty()) {
+		return;
+	}
+	if (isblank(text.front())) {
+		stmt(text);
+	} else {
+		decl(text);
+	}
+}
+
 dfg::reader::reader(dfg::unit &_dest, std::istream &src, std::ostream &_err):
 	err(_err),
 	dest(_dest)
@@ -241,6 +302,7 @@ dfg::reader::reader(dfg::unit &_dest, std::istream &src, std::ostream &_err):
 		loc.column = 0;
 		line(text);
 	}
+	end_block();
 }
 
 

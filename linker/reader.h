@@ -31,16 +31,21 @@ class reader
 	} loc;
 	std::ostream &err;
 	unit &dest;
+	std::string block_name;
 	std::vector<const node*> stack;
 	std::map<std::string, const node*> symbols;
 	void fail(std::string message);
 	const node *error(std::string message);
 	const node *literal(std::string body);
 	const node *symbol(std::string name);
+	const node *reloc(std::string name);
 	const node *terminal(char prefix, std::string body);
 	const node *operation(std::string text);
 	const node *token(std::string token);
 	void eval(std::string text);
+	void stmt(std::string text);
+	void end_block();
+	void decl(std::string text);
 	void line(std::string text);
 public:
 	reader(unit &dest, std::istream &src, std::ostream &err);
