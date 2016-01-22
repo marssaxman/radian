@@ -39,47 +39,80 @@ void block_ref::accept(visitor &v) const
 
 void unary::accept(visitor &v) const
 {
+	v.enter(*this);
 	source.accept(v);
-	v.visit(*this);
+	v.leave(*this);
 }
 
 void field::accept(visitor &v) const
 {
+	v.enter(*this);
 	source.accept(v);
-	v.visit(*this);
+	v.leave(*this);
 }
 
 void binary::accept(visitor &v) const
 {
+	v.enter(*this);
 	left.accept(v);
 	right.accept(v);
-	v.visit(*this);
+	v.leave(*this);
 }
 
 void select::accept(visitor &v) const
 {
+	v.enter(*this);
 	cond.accept(v);
 	thenval.accept(v);
 	elseval.accept(v);
-	v.visit(*this);
+	v.leave(*this);
 }
 
 void variadic::accept(visitor &v) const
 {
+	v.enter(*this);
 	for (auto &i: sources) {
 		i.get().accept(v);
 	}
-	v.visit(*this);
+	v.leave(*this);
 }
 
-block::block()
+block::block(std::string n):
+	name(n)
 {
 	code.emplace_back(new param_val);
 }
 
+std::string block::type() const
+{
+	// The link ID includes the type signature as a dot extension.
+	size_t pos = name.find_last_not_of('.');
+	if (pos != std::string::npos) {
+		return name.substr(pos + 1);
+	} else {
+		return std::string();
+	}
+}
+
 void block::accept(visitor &v) const
 {
+	v.enter(*this);
 	code.back()->accept(v);
+	v.leave(*this);
+}
+
+block &unit::make(std::string name)
+{
+	block *out = new block(name);
+	blocks.emplace_back(out);
+	return *out;
+}
+
+void unit::accept(visitor &v) const
+{
+	for (auto &b: blocks) {
+		b->accept(v);
+	}
 }
 
 } // namespace dfg

@@ -26,11 +26,23 @@ int main(int argc, const char *argv[])
 	logstream log(std::string(argv[0]) + ": ", std::cerr);
 
 	tdfl::code test = {
-        "              sum 0, 1",
-		"valid:        cpge ^, $0A",
-		"              andl %valid, $1",
+		"_add1.ii:",
+		"a:		0",
+		"b:		1",
+		"		sum %a, %b",
+		"_add2.ii:",
+		"		cpeq 0, $0",
+		"		sel ^, _done, _recurse",
+		"		call ^, *",
+		"_recurse.ii:",
+		"tmp2:	diff 0, $1",
+		"tmp3:	diff 1, $1",
+		"tmp4:	tuple %tmp2, %tmp3",
+		"		call _add2.ii, %tmp4",
+		"_done.ii: 1",
 	};
-	dfg::block code = tdfl::build(test, log);
+
+	dfg::unit code = tdfl::build(test, log);
 	tdfl::print(code, std::cout);
 
 	return log.empty()? EXIT_SUCCESS: EXIT_FAILURE;

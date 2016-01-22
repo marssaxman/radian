@@ -64,6 +64,7 @@ struct unary: public node
 {
 	enum opcode
 	{
+		jump,
 		notl,
 		test,
 		null,
@@ -89,6 +90,7 @@ struct binary: public node
 {
 	enum opcode
 	{
+		call,
 		diff,
 		xorl,
 		item,
@@ -136,23 +138,9 @@ struct variadic: public node
 	const std::vector<std::reference_wrapper<node>> sources;
 };
 
-struct visitor
-{
-	virtual ~visitor() {}
-	virtual void visit(const error &n) {}
-	virtual void visit(const literal_int &n) {}
-	virtual void visit(const param_val &n) {}
-	virtual void visit(const block_ref &n) {}
-	virtual void visit(const unary &n) {}
-	virtual void visit(const field &n) {}
-	virtual void visit(const binary &n) {}
-	virtual void visit(const select &n) {}
-	virtual void visit(const variadic &n) {}
-};
-
 struct block
 {
-	block();
+	block(std::string n);
 	template<typename T, typename... Args> node &make(Args&... args)
 	{
 		static_assert(!std::is_base_of<param_val, T>::value,
@@ -161,13 +149,43 @@ struct block
 		code.emplace_back(out);
 		return *out;
 	}
+	std::string link_id() const { return name; }
+	std::string type() const;
 	node &param() { return *code.front(); }
 	void accept(visitor &v) const;
 private:
+	std::string name;
 	std::vector<std::unique_ptr<node>> code;
 };
 
+struct unit
+{
+	block &make(std::string n);
+	void accept(visitor &v) const;
+private:
+	std::vector<std::unique_ptr<block>> blocks;
+};
 
+struct visitor
+{
+	virtual ~visitor() {}
+	virtual void visit(const error &n) {}
+	virtual void visit(const literal_int &n) {}
+	virtual void visit(const param_val &n) {}
+	virtual void visit(const block_ref &n) {}
+	virtual void enter(const unary&) {}
+	virtual void leave(const unary&) {}
+	virtual void enter(const field&) {}
+	virtual void leave(const field&) {}
+	virtual void enter(const binary&) {}
+	virtual void leave(const binary&) {}
+	virtual void enter(const select&) {}
+	virtual void leave(const select&) {}
+	virtual void enter(const variadic&) {}
+	virtual void leave(const variadic&) {}
+	virtual void enter(const block&) {}
+	virtual void leave(const block&) {}
+};
 
 } // namespace dfg
 

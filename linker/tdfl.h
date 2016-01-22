@@ -24,8 +24,8 @@
 namespace tdfl { // test data flow language
 
 // instruction names:
-//   unary: notl, test, null, peek, next
-//   binary: diff, xorl, item, head, skip, tail, drop
+//   unary: jump, notl, test, null, peek, next
+//   binary: call, diff, xorl, item, head, skip, tail, drop
 //   ternary: sel
 //   variadic: sum, andl, orl, cpeq, cpge, cpgt, tuple, array, cat
 // operand syntax:
@@ -37,10 +37,12 @@ namespace tdfl { // test data flow language
 //	 number['(' operand ')'] - Nth field of tuple; parameter is default value
 // instruction syntax:
 // [name':'] instruction [operand [',' operand]*] ['#' comment]
+// If the line declares a link name, this implicitly closes the previous
+// block and opens a new one with a new local symbol table.
 
 typedef std::vector<std::string> code;
-dfg::block build(const code &input, std::ostream &log);
-void print(const dfg::block&, std::ostream&);
+dfg::unit build(const code &input, std::ostream &log);
+void print(const dfg::unit&, std::ostream&);
 
 }
 
