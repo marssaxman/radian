@@ -36,15 +36,11 @@ namespace tdfl { // test data flow language
 //	 *digits - value of numbered field in parameter tuple
 //	 ^ - value produced by the previous instruction
 //   @digits(operand) - value of numbered field in operand tuple
+// instruction syntax:
+// [name':'] instruction [operand [',' operand]*] ['#'comment]
 
-struct instruction
-{
-	std::string def;
-	std::string op;
-	std::vector<std::string> args;
-};
-typedef std::vector<instruction> block;
-dfg::block &&build(const block&, std::ostream &log);
+typedef std::vector<std::string> code;
+dfg::block &&build(const code &input, std::ostream &log);
 
 }
 

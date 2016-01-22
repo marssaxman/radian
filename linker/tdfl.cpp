@@ -14,29 +14,30 @@
 // Radian. If not, see <http://www.gnu.org/licenses/>.
 
 #include <map>
+#include <deque>
 #include "tdfl.h"
 
 namespace tdfl {
+
+typedef std::reference_wrapper<dfg::node> node_ref;
 
 struct builder
 {
 	size_t line_no = 0;
 	std::ostream &err;
-	builder(const block &s, std::ostream &errlog);
+	builder(const code &s, std::ostream &errlog);
 	dfg::node &literal(std::string);
 	dfg::node &lookup(std::string);
 	dfg::node &linkref(std::string);
 	dfg::node &field(std::string);
 	dfg::node &param(std::string);
-	dfg::node &arg(std::string);
-	void unary(int, std::string arg);
-	void binary(int, std::string left, std::string right);
-	void select(std::string c, std::string t, std::string f);
-	void variadic(int, const std::vector<std::string> &args);
-	void eval(const instruction &inst);
+	dfg::node &operand(std::string);
+	dfg::node &inst(std::string op, std::deque<std::string> &tokens);
+	void def(std::string def, std::deque<std::string> &tokens);
+	void eval(std::deque<std::string> &tokens);
 	dfg::builder dest;
 	std::map<std::string, dfg::node*> symbols;
-	std::reference_wrapper<dfg::node> result;
+	node_ref result;
 };
 
 dfg::node &builder::literal(std::string s)
@@ -92,7 +93,7 @@ dfg::node &builder::field(std::string s)
 		err << line_no << ": expected a field reference token" << std::endl;
 		return dest.make<dfg::error>();
 	}
-	dfg::node &tuple = arg(std::string(iter, s.end() - 1));
+	dfg::node &tuple = operand(std::string(iter, s.end() - 1));
 	return dest.make<dfg::field>(tuple, index);
 }
 
@@ -114,7 +115,7 @@ dfg::node &builder::param(std::string s)
 	return dest.make<dfg::field>(dest.param(), index);
 }
 
-dfg::node &builder::arg(std::string s)
+dfg::node &builder::operand(std::string s)
 {
 	if (s.empty()) {
 		err << line_no << ": expected a non-empty operand here" << std::endl;
@@ -122,58 +123,30 @@ dfg::node &builder::arg(std::string s)
 	}
 	std::string rest = s.substr(1);
 	switch (s.front()) {
-	case '$': return literal(rest);
-	case '%': return lookup(rest);
-	case '_': return linkref(rest);
-	case '@': return field(rest);
-	case '*': return param(rest);
-	case '^': if (rest.empty()) return result;
-	default:
-		err << line_no << ": illegal operand token \"" <<
+		case '$': return literal(rest);
+		case '%': return lookup(rest);
+		case '_': return linkref(rest);
+		case '@': return field(rest);
+		case '*': return param(rest);
+		case '^': if (rest.empty()) return result;
+		default: err << line_no << ": illegal operand token \"" <<
 				s << "\"" << std::endl;
 	}
 	return dest.make<dfg::error>();
 }
 
-void builder::unary(int opcode, std::string s)
-{
-	dfg::unary::opcode op = static_cast<dfg::unary::opcode>(opcode);
-	dfg::node &source = arg(s);
-	result = dest.make<dfg::unary>(op, source);
-}
-
-void builder::binary(int opcode, std::string l, std::string r)
-{
-	dfg::binary::opcode op = static_cast<dfg::binary::opcode>(opcode);
-	dfg::node &left = arg(l);
-	dfg::node &right = arg(r);
-	result = dest.make<dfg::binary>(op, left, right);
-}
-
-void builder::select(std::string c, std::string t, std::string f)
-{
-	dfg::node &cond = arg(c);
-	dfg::node &trueval = arg(t);
-	dfg::node &elseval = arg(f);
-	result = dest.make<dfg::select>(cond, trueval, elseval);
-}
-
-void builder::variadic(int opcode, const std::vector<std::string> &args)
-{
-	dfg::variadic::opcode op = static_cast<dfg::variadic::opcode>(opcode);
-	std::vector<std::reference_wrapper<dfg::node>> sources;
-	for (auto &s: args) {
-		sources.push_back(arg(s));
-	}
-	result = dest.make<dfg::variadic>(op, sources);
-}
-
-void builder::eval(const instruction &inst)
+dfg::node &builder::inst(std::string op, std::deque<std::string> &argtokens)
 {
 	struct info
 	{
 		int arity;
-		int opcode;
+		union
+		{
+			int opcode;
+			dfg::variadic::opcode var_op;
+			dfg::unary::opcode un_op;
+			dfg::binary::opcode bin_op;
+		};
 	};
 	static std::map<std::string, info> language = {
 		{"notl", {1, dfg::unary::notl}},
@@ -199,50 +172,104 @@ void builder::eval(const instruction &inst)
 		{"array", {0, dfg::variadic::array}},
 		{"cat", {0, dfg::variadic::cat}},
 	};
-	auto langiter = language.find(inst.op);
+	auto langiter = language.find(op);
 	if (langiter == language.end()) {
+		if (argtokens.empty()) {
+			// Maybe this line is just referencing some value in order to
+			// load up the previous-result value or define a symbol.
+			return operand(op);
+		}
 		err << line_no << ": undefined instruction \"" <<
-				inst.op << "\"" << std::endl;
-		result = dest.make<dfg::error>();
-		return;
+				op << "\"" << std::endl;
+		return dest.make<dfg::error>();
 	}
 	struct info ii = langiter->second;
-	std::vector<std::string> args = inst.args;
-	if (ii.arity > 0 && ii.arity > args.size()) {
-		err << line_no << ": not enough operands (expected " <<
-				ii.arity << ", got " << args.size() << ")" << std::endl;
-		args.resize(ii.arity);
-	} else if (ii.arity > 0 && ii.arity < args.size()) {
-		err << line_no << ": too many operands (expected " <<
-				ii.arity << ", got " << args.size() << ")" << std::endl;
+	std::vector<node_ref> vals;
+	if (argtokens.size() < ii.arity) {
+		// The leftmost operand may be ommitted, implicitly referencing the
+		// result of the previous operation.
+		vals.push_back(result);
+	}
+	for (auto &token: argtokens) {
+		vals.push_back(operand(token));
+	}
+	if (vals.size() < ii.arity) {
+		err << line_no << ": not enough operands (expected " << ii.arity <<
+				", got " << argtokens.size() << ")" << std::endl;
+		do {
+			vals.push_back(dest.make<dfg::error>());
+		} while (vals.size() < ii.arity);
+	} else if (ii.arity > 0 && argtokens.size() > ii.arity) {
+		err << line_no << ": too many operands (expected " << ii.arity <<
+				", got " << argtokens.size() << ")" << std::endl;
 	}
 	switch (ii.arity) {
-		case 0: variadic(ii.opcode, args); break;
-		case 1: unary(ii.opcode, args[0]); break;
-		case 2: binary(ii.opcode, args[0], args[1]); break;
-		case 3: select(args[0], args[1], args[2]); break;
-	}
-	if (!inst.def.empty()) {
-		auto iter = symbols.find(inst.def);
-		if (iter != symbols.end()) {
-			err << line_no << ": redefinition of symbol \"" <<
-					inst.def << "\"" << std::endl;
-		}
-		symbols[inst.def] = &result.get();
+		case 0: return dest.make<dfg::variadic>(ii.var_op, vals);
+		case 1: return dest.make<dfg::unary>(ii.un_op, vals[0]);
+		case 2: return dest.make<dfg::binary>(ii.bin_op, vals[0], vals[1]);
+		case 3: return dest.make<dfg::select>(vals[0], vals[1], vals[2]);
+		default: return dest.make<dfg::error>();
 	}
 }
 
-builder::builder(const block &s, std::ostream &errlog):
+void builder::def(std::string def, std::deque<std::string> &tokens)
+{
+	if (tokens.empty()) {
+		err << line_no << ": definition with no value" << std::endl;
+		return;
+	}
+	std::string name = tokens.front();
+	tokens.pop_front();
+	inst(name, tokens);
+	auto iter = symbols.find(def);
+	if (iter != symbols.end()) {
+		err << line_no << ": redefinition of symbol \"" <<
+				def << "\"" << std::endl;
+	}
+	symbols[def] = &result.get();
+}
+
+void builder::eval(std::deque<std::string> &tokens)
+{
+	if (tokens.empty()) {
+		return;
+	}
+	std::string front = tokens.front();
+	tokens.pop_front();
+	if (front.back() == ':') {
+		def(front, tokens);
+	} else {
+		inst(front, tokens);
+	}
+}
+
+builder::builder(const code &s, std::ostream &errlog):
 	err(errlog),
 	result(dest.param())
 {
-	for (auto &inst: s) {
-		eval(inst);
+	for (auto &line: s) {
+		std::deque<std::string> tokens;
+		auto begin = line.begin();
+		for(;;) {
+			while (isspace(*begin) && begin != line.end()) {
+				++begin;
+			}
+			auto end = begin;
+			while (!isspace(*end) && end != line.end()) {
+				++end;
+			}
+			if (end == begin) {
+				break;
+			}
+			tokens.emplace_back(begin, end);
+			begin = end;
+		}
+		eval(tokens);
 		++line_no;
 	}
 }
 
-dfg::block &&build(const block &src, std::ostream &errlog)
+dfg::block &&build(const code &src, std::ostream &errlog)
 {
 	return std::move(builder(src, errlog).dest.done());
 }

@@ -25,9 +25,10 @@ int main(int argc, const char *argv[])
 	// out as a bootable kernel image.
 	logstream log(std::string(argv[0]) + ": ", std::cerr);
 
-	tdfl::block test = {
-		{"s", "sum", {"*0", "*1"}},
-		{"b", "ord", {"%s", "$0A"}},
+	tdfl::code test = {
+        "              sum *0 *1",
+		"valid:        ord ^ $0A",
+		"              all $1",
 	};
 	tdfl::build(test, log);
 
