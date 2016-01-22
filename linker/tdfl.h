@@ -25,8 +25,8 @@ namespace tdfl { // test data flow language
 
 // instruction names:
 //   unary: jump, notl, test, null, peek, next
-//   binary: call, diff, xorl, item, head, skip, tail, drop
-//   ternary: sel
+//   binary: call, bind, diff, xorl, item, head, skip, tail, drop
+//   ternary: brcc, cond, loop
 //   variadic: sum, andl, orl, cpeq, cpge, cpgt, tuple, array, cat
 // operand syntax:
 //   $digits - integer literal (hexadecimal)

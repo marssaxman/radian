@@ -91,6 +91,7 @@ struct binary: public node
 	enum opcode
 	{
 		call,
+		bind,
 		diff,
 		xorl,
 		item,
@@ -107,11 +108,18 @@ struct binary: public node
 	node &right;
 };
 
-struct select: public node
+struct ternary: public node
 {
-	select(node &c, node &t, node &e):
-		node(), cond(c), thenval(t), elseval(e) {}
+	enum opcode
+	{
+		bcc,
+		sel,
+		loop,
+	};
+	ternary(opcode o, node &c, node &t, node &e):
+		node(), op(o), cond(c), thenval(t), elseval(e) {}
 	virtual void accept(visitor &v) const override;
+	opcode op;
 	node &cond;
 	node &thenval;
 	node &elseval;
@@ -179,8 +187,8 @@ struct visitor
 	virtual void leave(const field&) {}
 	virtual void enter(const binary&) {}
 	virtual void leave(const binary&) {}
-	virtual void enter(const select&) {}
-	virtual void leave(const select&) {}
+	virtual void enter(const ternary&) {}
+	virtual void leave(const ternary&) {}
 	virtual void enter(const variadic&) {}
 	virtual void leave(const variadic&) {}
 	virtual void enter(const block&) {}

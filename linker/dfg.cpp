@@ -59,7 +59,7 @@ void binary::accept(visitor &v) const
 	v.leave(*this);
 }
 
-void select::accept(visitor &v) const
+void ternary::accept(visitor &v) const
 {
 	v.enter(*this);
 	cond.accept(v);

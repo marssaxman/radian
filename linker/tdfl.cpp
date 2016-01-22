@@ -157,6 +157,7 @@ void builder::inst(string op, deque<string> &argtokens)
 			dfg::variadic::opcode var_op;
 			dfg::unary::opcode un_op;
 			dfg::binary::opcode bin_op;
+			dfg::ternary::opcode ter_op;
 		};
 	};
 	static map<string, info> language = {
@@ -167,6 +168,7 @@ void builder::inst(string op, deque<string> &argtokens)
 		{"peek", {1, dfg::unary::peek}},
 		{"next", {1, dfg::unary::next}},
 		{"call", {2, dfg::binary::call}},
+		{"bind", {2, dfg::binary::bind}},
 		{"diff", {2, dfg::binary::diff}},
 		{"xorl", {2, dfg::binary::xorl}},
 		{"item", {2, dfg::binary::item}},
@@ -174,7 +176,9 @@ void builder::inst(string op, deque<string> &argtokens)
 		{"skip", {2, dfg::binary::skip}},
 		{"tail", {2, dfg::binary::tail}},
 		{"drop", {2, dfg::binary::drop}},
-		{"sel", {3}},
+		{"bcc", {3, dfg::ternary::bcc}},
+		{"sel", {3, dfg::ternary::sel}},
+		{"loop", {3, dfg::ternary::loop}},
 		{"sum", {0, dfg::variadic::sum}},
 		{"andl", {0, dfg::variadic::andl}},
 		{"orl", {0, dfg::variadic::orl}},
@@ -197,26 +201,26 @@ void builder::inst(string op, deque<string> &argtokens)
 		return;
 	}
 	struct info ii = langiter->second;
-	vector<node_ref> vals;
+	vector<node_ref> val;
 	for (auto &token: argtokens) {
 		operand(token);
-		vals.push_back(result);
+		val.push_back(result);
 	}
-	if (vals.size() < ii.arity) {
+	if (val.size() < ii.arity) {
 		report() << "not enough operands (expected " << ii.arity <<
 				", got " << argtokens.size() << ")" << endl;
 		do {
-			vals.push_back(result);
-		} while (vals.size() < ii.arity);
+			val.push_back(result);
+		} while (val.size() < ii.arity);
 	} else if (ii.arity > 0 && argtokens.size() > ii.arity) {
 		report() << "too many operands (expected " << ii.arity <<
 				", got " << argtokens.size() << ")" << endl;
 	}
 	switch (ii.arity) {
-		case 0: make<dfg::variadic>(ii.var_op, vals); break;
-		case 1: make<dfg::unary>(ii.un_op, vals[0]); break;
-		case 2: make<dfg::binary>(ii.bin_op, vals[0], vals[1]); break;
-		case 3: make<dfg::select>(vals[0], vals[1], vals[2]); break;
+		case 0: make<dfg::variadic>(ii.var_op, val); break;
+		case 1: make<dfg::unary>(ii.un_op, val[0]); break;
+		case 2: make<dfg::binary>(ii.bin_op, val[0], val[1]); break;
+		case 3: make<dfg::ternary>(ii.ter_op, val[0], val[1], val[2]); break;
 		default: make<dfg::error>(); break;
 	}
 }
@@ -320,7 +324,7 @@ struct printer: public dfg::visitor
 	virtual void leave(const dfg::unary&) override;
 	virtual void leave(const dfg::field&) override;
 	virtual void leave(const dfg::binary&) override;
-	virtual void leave(const dfg::select&) override;
+	virtual void leave(const dfg::ternary&) override;
 	virtual void leave(const dfg::variadic&) override;
 	virtual void enter(const dfg::block&) override;
 	void emit(const dfg::node&, std::string op, std::vector<std::string> args);
@@ -385,6 +389,7 @@ void printer::leave(const dfg::binary &n)
 	string op;
 	switch (n.op) {
 		case dfg::binary::call: op = "call"; break;
+		case dfg::binary::bind: op = "bind"; break;
 		case dfg::binary::diff: op = "diff"; break;
 		case dfg::binary::xorl: op = "xorl"; break;
 		case dfg::binary::item: op = "item"; break;
@@ -396,9 +401,15 @@ void printer::leave(const dfg::binary &n)
 	emit(n, op, {sym(n.left), sym(n.right)});
 }
 
-void printer::leave(const dfg::select &n)
+void printer::leave(const dfg::ternary &n)
 {
-	emit(n, "sel", {sym(n.cond), sym(n.thenval), sym(n.elseval)});
+	string op;
+	switch (n.op) {
+		case dfg::ternary::bcc: op = "bcc"; break;
+		case dfg::ternary::sel: op = "sel"; break;
+		case dfg::ternary::loop: op = "loop"; break;
+	}
+	emit(n, op, {sym(n.cond), sym(n.thenval), sym(n.elseval)});
 }
 
 void printer::leave(const dfg::variadic &n)
