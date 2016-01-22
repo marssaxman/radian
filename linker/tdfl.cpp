@@ -15,6 +15,7 @@
 
 #include <map>
 #include <deque>
+#include <sstream>
 #include "tdfl.h"
 
 namespace tdfl {
@@ -100,7 +101,7 @@ dfg::node &builder::field(std::string s)
 dfg::node &builder::param(std::string s)
 {
 	if (s.empty()) {
-		return dest.param();
+		return dest.param;
 	}
 	uint32_t index = 0;
 	for (char c: s) {
@@ -112,7 +113,7 @@ dfg::node &builder::param(std::string s)
 			return dest.make<dfg::error>();
 		}
 	}
-	return dest.make<dfg::field>(dest.param(), index);
+	return dest.make<dfg::field>(dest.param, index);
 }
 
 dfg::node &builder::operand(std::string s)
@@ -245,7 +246,7 @@ void builder::eval(std::deque<std::string> &tokens)
 
 builder::builder(const code &s, std::ostream &errlog):
 	err(errlog),
-	result(dest.param())
+	result(dest.param)
 {
 	for (auto &line: s) {
 		std::deque<std::string> tokens;
@@ -272,6 +273,107 @@ builder::builder(const code &s, std::ostream &errlog):
 dfg::block &&build(const code &src, std::ostream &errlog)
 {
 	return std::move(builder(src, errlog).dest.done());
+}
+
+struct printer: public dfg::visitor
+{
+	printer(std::ostream &o):
+		out(o) {}
+	virtual void visit(const dfg::error&) override;
+	virtual void visit(const dfg::literal_int&) override;
+	virtual void visit(const dfg::param_val&) override;
+	virtual void visit(const dfg::block_ref&) override;
+	virtual void visit(const dfg::unary&) override;
+	virtual void visit(const dfg::field&) override;
+	virtual void visit(const dfg::binary&) override;
+	virtual void visit(const dfg::select&) override;
+	virtual void visit(const dfg::variadic&) override;
+	void emitline(const dfg::node &n, std::string text);
+	std::map<const dfg::node*, std::string> names;
+	std::ostream &out;
+};
+
+void printer::visit(const dfg::error &n)
+{
+	emitline(n, "");
+}
+
+void printer::visit(const dfg::literal_int &n)
+{
+	emitline(n, "");
+}
+
+void printer::visit(const dfg::param_val &n)
+{
+	emitline(n, "");
+}
+
+void printer::visit(const dfg::block_ref &n)
+{
+	emitline(n, "");
+}
+
+void printer::visit(const dfg::unary &n)
+{
+	emitline(n, "");
+}
+
+void printer::visit(const dfg::field &n)
+{
+	emitline(n, "");
+}
+
+void printer::visit(const dfg::binary &n)
+{
+	emitline(n, "");
+}
+
+void printer::visit(const dfg::select &n)
+{
+	emitline(n, "");
+}
+
+void printer::visit(const dfg::variadic &n)
+{
+	emitline(n, "");
+}
+
+void printer::emitline(const dfg::node &n, std::string text)
+{
+	// Generate a name for this node based on its address, then emit a line
+	// defining that name against whatever text generates the value.
+	static char koremutake[128][4] = {
+		"ba", "be", "bi", "bo", "bu", "by",
+		"da", "de", "di", "do", "du", "dy",
+		"fa", "fe", "fi", "fo", "fu", "fy",
+		"ga", "ge", "gi", "go", "gu", "gy",
+		"ha", "he", "hi", "ho", "hu", "hy",
+		"ja", "je", "ji", "jo", "ju", "jy",
+		"ka", "ke", "ki", "ko", "ku", "ky",
+		"la", "le", "li", "lo", "lu", "ly",
+		"ma", "me", "mi", "mo", "mu", "my",
+		"na", "ne", "ni", "no", "nu", "ny",
+		"pa", "pe", "pi", "po", "pu", "py",
+		"ra", "re", "ri", "ro", "ru", "ry",
+		"sa", "se", "si", "so", "su", "sy",
+		"ta", "te", "ti", "to", "tu", "ty",
+		"va", "ve", "vi", "vo", "vu", "vy",
+		"bra", "bre", "bri", "bro", "bru", "bry",
+		"dra", "dre", "dri", "dro", "dru", "dry",
+		"fra", "fre", "fri", "fro", "fru", "fry",
+		"gra", "gre", "gri", "gro", "gru", "gry",
+		"pra", "pre", "pri", "pro", "pru", "pry",
+		"sta", "ste", "sti", "sto", "stu", "sty",
+		"tra", "tre"
+	};
+	uintptr_t u = reinterpret_cast<uintptr_t>(&n);
+	out << std::hex << u << std::endl;
+}
+
+void print(const dfg::block &src, std::ostream &out)
+{
+	printer p(out);
+	src.accept(p);
 }
 
 } // namespace tdfl

@@ -30,7 +30,8 @@ int main(int argc, const char *argv[])
 		"valid:        ord ^ $0A",
 		"              all $1",
 	};
-	tdfl::build(test, log);
+	dfg::block code = std::move(tdfl::build(test, log));
+	tdfl::print(code, std::cout);
 
 	return log.empty()? EXIT_SUCCESS: EXIT_FAILURE;
 }

@@ -41,9 +41,9 @@ struct error: public node
 
 struct literal_int: public node
 {
-	literal_int(uint32_t v): node(), _value(v) {}
+	literal_int(uint32_t v): node(), value(v) {}
 	virtual void accept(visitor &v) const override;
-	uint32_t _value;
+	uint32_t value;
 };
 
 struct param_val: public node
@@ -54,9 +54,10 @@ struct param_val: public node
 
 struct block_ref: public node
 {
-	block_ref(std::string id): node(), _link_id(id) {}
+	block_ref(std::string id):
+		node(), link_id(id) {}
 	virtual void accept(visitor &v) const override;
-	std::string _link_id;
+	std::string link_id;
 };
 
 struct unary: public node
@@ -69,19 +70,19 @@ struct unary: public node
 		peek,
 		next,
 	};
-	unary(opcode o, node &s): node(), _op(o), _source(s) {}
+	unary(opcode o, node &s): node(), op(o), source(s) {}
 	virtual void accept(visitor &v) const override;
-	opcode _op;
-	node &_source;
+	opcode op;
+	node &source;
 };
 
 struct field: public node
 {
 	field(node &s, uint32_t i):
-		node(), _source(s), _index(i) {}
+		node(), source(s), index(i) {}
 	virtual void accept(visitor &v) const override;
-	node &_source;
-	uint32_t _index;
+	node &source;
+	uint32_t index;
 };
 
 struct binary: public node
@@ -97,21 +98,21 @@ struct binary: public node
 		drop,
 	};
 	binary(opcode o, node &l, node &r):
-		node(), _op(o), _left(l), _right(r) {}
+		node(), op(o), left(l), right(r) {}
 	virtual void accept(visitor &v) const override;
-	opcode _op;
-	node &_left;
-	node &_right;
+	opcode op;
+	node &left;
+	node &right;
 };
 
 struct select: public node
 {
 	select(node &c, node &t, node &e):
-		node(), _cond(c), _then_val(t), _else_val(e) {}
+		node(), cond(c), thenval(t), elseval(e) {}
 	virtual void accept(visitor &v) const override;
-	node &_cond;
-	node &_then_val;
-	node &_else_val;
+	node &cond;
+	node &thenval;
+	node &elseval;
 };
 
 struct variadic: public node
@@ -129,10 +130,10 @@ struct variadic: public node
 		cat,
 	};
 	variadic(opcode o, const std::vector<std::reference_wrapper<node>> &s):
-		node(), _op(o), _sources(s) {}
+		node(), op(o), sources(s) {}
 	virtual void accept(visitor &v) const override;
-	opcode _op;
-	std::vector<std::reference_wrapper<node>> _sources;
+	opcode op;
+	std::vector<std::reference_wrapper<node>> sources;
 };
 
 struct visitor
@@ -151,10 +152,11 @@ struct visitor
 
 struct block
 {
-	block(std::vector<std::unique_ptr<node>> &&s): _code(std::move(s)) {}
-	void accept(visitor &v) { _code.back()->accept(v); }
+	block(std::vector<std::unique_ptr<node>> &&s):
+		code(std::move(s)) {}
+	void accept(visitor &v) const;
 private:
-	std::vector<std::unique_ptr<node>> _code;
+	std::vector<std::unique_ptr<node>> code;
 };
 
 struct builder
@@ -164,14 +166,13 @@ struct builder
 	{
 		static_assert(!std::is_base_of<param_val, T>::value,
 				"don't make new param_vals - use builder.param()");
-		_code.emplace_back(new T(args...));
-		return *_code.back();
+		code.emplace_back(new T(args...));
+		return *code.back();
 	}
-	node &param() { return _param; }
-	block &&done() { return std::move(block(std::move(_code))); }
+	node &param;
+	block &&done() { return std::move(block(std::move(code))); }
 private:
-	node &_param;
-	std::vector<std::unique_ptr<node>> _code;
+	std::vector<std::unique_ptr<node>> code;
 };
 
 } // namespace dfg

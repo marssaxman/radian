@@ -39,43 +39,48 @@ void block_ref::accept(visitor &v) const
 
 void unary::accept(visitor &v) const
 {
-	_source.accept(v);
+	source.accept(v);
 	v.visit(*this);
 }
 
 void field::accept(visitor &v) const
 {
-	_source.accept(v);
+	source.accept(v);
 	v.visit(*this);
 }
 
 void binary::accept(visitor &v) const
 {
-	_left.accept(v);
-	_right.accept(v);
+	left.accept(v);
+	right.accept(v);
 	v.visit(*this);
 }
 
 void select::accept(visitor &v) const
 {
-	_cond.accept(v);
-	_then_val.accept(v);
-	_else_val.accept(v);
+	cond.accept(v);
+	thenval.accept(v);
+	elseval.accept(v);
 	v.visit(*this);
 }
 
 void variadic::accept(visitor &v) const
 {
-	for (auto &i: _sources) {
+	for (auto &i: sources) {
 		i.get().accept(v);
 	}
 	v.visit(*this);
 }
 
-builder::builder():
-	_param(*new param_val())
+void block::accept(visitor &v) const
 {
-	_code.emplace_back(&_param);
+	code.back()->accept(v);
+}
+
+builder::builder():
+	param(*new param_val())
+{
+	code.emplace_back(&param);
 }
 
 
