@@ -133,47 +133,41 @@ struct variadic: public node
 		node(), op(o), sources(s) {}
 	virtual void accept(visitor &v) const override;
 	opcode op;
-	std::vector<std::reference_wrapper<node>> sources;
+	const std::vector<std::reference_wrapper<node>> sources;
 };
 
 struct visitor
 {
 	virtual ~visitor() {}
-	virtual void visit(const error&) {}
-	virtual void visit(const literal_int&) {}
-	virtual void visit(const param_val&) {}
-	virtual void visit(const block_ref&) {}
-	virtual void visit(const unary&) {}
-	virtual void visit(const field&) {}
-	virtual void visit(const binary&) {}
-	virtual void visit(const select&) {}
-	virtual void visit(const variadic&) {}
+	virtual void visit(const error &n) {}
+	virtual void visit(const literal_int &n) {}
+	virtual void visit(const param_val &n) {}
+	virtual void visit(const block_ref &n) {}
+	virtual void visit(const unary &n) {}
+	virtual void visit(const field &n) {}
+	virtual void visit(const binary &n) {}
+	virtual void visit(const select &n) {}
+	virtual void visit(const variadic &n) {}
 };
 
 struct block
 {
-	block(std::vector<std::unique_ptr<node>> &&s):
-		code(std::move(s)) {}
+	block();
+	template<typename T, typename... Args> node &make(Args&... args)
+	{
+		static_assert(!std::is_base_of<param_val, T>::value,
+				"don't make new param_vals - use block.param()");
+		T *out = new T(args...);
+		code.emplace_back(out);
+		return *out;
+	}
+	node &param() { return *code.front(); }
 	void accept(visitor &v) const;
 private:
 	std::vector<std::unique_ptr<node>> code;
 };
 
-struct builder
-{
-	builder();
-	template<typename T, typename... Args> node &make(Args&... args)
-	{
-		static_assert(!std::is_base_of<param_val, T>::value,
-				"don't make new param_vals - use builder.param()");
-		code.emplace_back(new T(args...));
-		return *code.back();
-	}
-	node &param;
-	block &&done() { return std::move(block(std::move(code))); }
-private:
-	std::vector<std::unique_ptr<node>> code;
-};
+
 
 } // namespace dfg
 

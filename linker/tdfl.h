@@ -40,7 +40,7 @@ namespace tdfl { // test data flow language
 // [name':'] instruction [operand [',' operand]*] ['#'comment]
 
 typedef std::vector<std::string> code;
-dfg::block &&build(const code &input, std::ostream &log);
+dfg::block build(const code &input, std::ostream &log);
 void print(const dfg::block&, std::ostream&);
 
 }

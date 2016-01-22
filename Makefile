@@ -7,7 +7,7 @@ linker: bin/link
 include srctree.mk
 -include $(call findtype, d, obj)
 
-CXXFLAGS+=-std=c++11 -MD -MP -Werror -fvisibility=hidden
+CXXFLAGS+=-std=c++11 -MD -MP -Werror -g -fvisibility=hidden
 
 COMPILER_OBJS:=$(call objs, cpp, compiler, obj/compiler)
 bin/compile: $(COMPILER_OBJS)

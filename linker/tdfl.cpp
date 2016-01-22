@@ -16,6 +16,8 @@
 #include <map>
 #include <deque>
 #include <sstream>
+#include <assert.h>
+#include <set>
 #include "tdfl.h"
 
 namespace tdfl {
@@ -34,9 +36,9 @@ struct builder
 	dfg::node &param(std::string);
 	dfg::node &operand(std::string);
 	dfg::node &inst(std::string op, std::deque<std::string> &tokens);
-	void def(std::string def, std::deque<std::string> &tokens);
+	dfg::node &def(std::string def, std::deque<std::string> &tokens);
 	void eval(std::deque<std::string> &tokens);
-	dfg::builder dest;
+	dfg::block dest;
 	std::map<std::string, dfg::node*> symbols;
 	node_ref result;
 };
@@ -101,7 +103,7 @@ dfg::node &builder::field(std::string s)
 dfg::node &builder::param(std::string s)
 {
 	if (s.empty()) {
-		return dest.param;
+		return dest.param();
 	}
 	uint32_t index = 0;
 	for (char c: s) {
@@ -113,7 +115,7 @@ dfg::node &builder::param(std::string s)
 			return dest.make<dfg::error>();
 		}
 	}
-	return dest.make<dfg::field>(dest.param, index);
+	return dest.make<dfg::field>(dest.param(), index);
 }
 
 dfg::node &builder::operand(std::string s)
@@ -213,21 +215,22 @@ dfg::node &builder::inst(std::string op, std::deque<std::string> &argtokens)
 	}
 }
 
-void builder::def(std::string def, std::deque<std::string> &tokens)
+dfg::node &builder::def(std::string def, std::deque<std::string> &tokens)
 {
 	if (tokens.empty()) {
 		err << line_no << ": definition with no value" << std::endl;
-		return;
+		return dest.make<dfg::error>();
 	}
 	std::string name = tokens.front();
 	tokens.pop_front();
-	inst(name, tokens);
+	dfg::node &out = inst(name, tokens);
 	auto iter = symbols.find(def);
 	if (iter != symbols.end()) {
 		err << line_no << ": redefinition of symbol \"" <<
 				def << "\"" << std::endl;
 	}
-	symbols[def] = &result.get();
+	symbols[def] = &out;
+	return out;
 }
 
 void builder::eval(std::deque<std::string> &tokens)
@@ -238,15 +241,16 @@ void builder::eval(std::deque<std::string> &tokens)
 	std::string front = tokens.front();
 	tokens.pop_front();
 	if (front.back() == ':') {
-		def(front, tokens);
+		front.pop_back();
+		result = def(front, tokens);
 	} else {
-		inst(front, tokens);
+		result = inst(front, tokens);
 	}
 }
 
 builder::builder(const code &s, std::ostream &errlog):
 	err(errlog),
-	result(dest.param)
+	result(dest.param())
 {
 	for (auto &line: s) {
 		std::deque<std::string> tokens;
@@ -270,9 +274,9 @@ builder::builder(const code &s, std::ostream &errlog):
 	}
 }
 
-dfg::block &&build(const code &src, std::ostream &errlog)
+dfg::block build(const code &src, std::ostream &errlog)
 {
-	return std::move(builder(src, errlog).dest.done());
+	return builder(src, errlog).dest;
 }
 
 struct printer: public dfg::visitor
@@ -288,86 +292,163 @@ struct printer: public dfg::visitor
 	virtual void visit(const dfg::binary&) override;
 	virtual void visit(const dfg::select&) override;
 	virtual void visit(const dfg::variadic&) override;
+	void emitinst(const dfg::node &n, std::vector<std::string> args);
 	void emitline(const dfg::node &n, std::string text);
+	std::string sym(const dfg::node &n) { return names[&n]; }
+	std::string makename(const dfg::node &n);
 	std::map<const dfg::node*, std::string> names;
+	std::set<std::string> used;
 	std::ostream &out;
 };
 
 void printer::visit(const dfg::error &n)
 {
-	emitline(n, "");
+	emitline(n, "!error!");
 }
 
 void printer::visit(const dfg::literal_int &n)
 {
-	emitline(n, "");
+	std::stringstream ss;
+	ss << std::hex << n.value;
+	std::string s = ss.str();
+	names[&n] = ((s.size() & 1)? "$0": "$") + s;
 }
 
 void printer::visit(const dfg::param_val &n)
 {
-	emitline(n, "");
+	names[&n] = "*";
 }
 
 void printer::visit(const dfg::block_ref &n)
 {
-	emitline(n, "");
+	names[&n] = "_" + n.link_id;
 }
 
 void printer::visit(const dfg::unary &n)
 {
-	emitline(n, "");
+	std::string op;
+	switch (n.op) {
+		case dfg::unary::notl: op = "notl"; break;
+		case dfg::unary::test: op = "test"; break;
+		case dfg::unary::null: op = "null"; break;
+		case dfg::unary::peek: op = "peek"; break;
+		case dfg::unary::next: op = "next"; break;
+	}
+	emitinst(n, {op, sym(n.source)});
 }
 
 void printer::visit(const dfg::field &n)
 {
-	emitline(n, "");
+	std::string source = sym(n.source);
+	std::stringstream ss;
+	ss << std::dec << n.index;
+	std::string index = ss.str();
+	if (source == "*") {
+		names[&n] = source + index;
+	} else {
+		names[&n] = "@" + index + "(" + source + ")";
+	}
 }
 
 void printer::visit(const dfg::binary &n)
 {
-	emitline(n, "");
+	std::string op;
+	switch (n.op) {
+		case dfg::binary::diff: op = "diff"; break;
+		case dfg::binary::xorl: op = "xorl"; break;
+		case dfg::binary::item: op = "item"; break;
+		case dfg::binary::head: op = "head"; break;
+		case dfg::binary::skip: op = "skip"; break;
+		case dfg::binary::tail: op = "tail"; break;
+		case dfg::binary::drop: op = "drop"; break;
+	}
+	emitinst(n, {op, sym(n.left), sym(n.right)});
 }
 
 void printer::visit(const dfg::select &n)
 {
-	emitline(n, "");
+	emitinst(n, {"cond", sym(n.cond), sym(n.thenval), sym(n.elseval)});
 }
 
 void printer::visit(const dfg::variadic &n)
 {
-	emitline(n, "");
+	std::string op;
+	switch (n.op) {
+		case dfg::variadic::sum: op = "sum"; break;
+		case dfg::variadic::all: op = "all"; break;
+		case dfg::variadic::any: op = "any"; break;
+		case dfg::variadic::equ: op = "equ"; break;
+		case dfg::variadic::ord: op = "ord"; break;
+		case dfg::variadic::asc: op = "asc"; break;
+		case dfg::variadic::tuple: op = "tuple"; break;
+		case dfg::variadic::array: op = "array"; break;
+		case dfg::variadic::cat: op = "cat"; break;
+	}
+	std::vector<std::string> tokens(1, op);
+	for (auto &i: n.sources) {
+		tokens.push_back(sym(i.get()));
+	}
+	emitinst(n, tokens);
+}
+
+void printer::emitinst(const dfg::node &n, std::vector<std::string> tokens)
+{
+	std::stringstream ss;
+	for (auto iter = tokens.begin(); iter != tokens.end();) {
+		ss << *iter;
+		if (++iter != tokens.end()) {
+			ss << " ";
+		}
+	}
+	emitline(n, ss.str());
 }
 
 void printer::emitline(const dfg::node &n, std::string text)
 {
-	// Generate a name for this node based on its address, then emit a line
-	// defining that name against whatever text generates the value.
-	static char koremutake[128][4] = {
-		"ba", "be", "bi", "bo", "bu", "by",
-		"da", "de", "di", "do", "du", "dy",
-		"fa", "fe", "fi", "fo", "fu", "fy",
-		"ga", "ge", "gi", "go", "gu", "gy",
-		"ha", "he", "hi", "ho", "hu", "hy",
-		"ja", "je", "ji", "jo", "ju", "jy",
-		"ka", "ke", "ki", "ko", "ku", "ky",
-		"la", "le", "li", "lo", "lu", "ly",
-		"ma", "me", "mi", "mo", "mu", "my",
-		"na", "ne", "ni", "no", "nu", "ny",
-		"pa", "pe", "pi", "po", "pu", "py",
-		"ra", "re", "ri", "ro", "ru", "ry",
-		"sa", "se", "si", "so", "su", "sy",
-		"ta", "te", "ti", "to", "tu", "ty",
-		"va", "ve", "vi", "vo", "vu", "vy",
-		"bra", "bre", "bri", "bro", "bru", "bry",
-		"dra", "dre", "dri", "dro", "dru", "dry",
-		"fra", "fre", "fri", "fro", "fru", "fry",
-		"gra", "gre", "gri", "gro", "gru", "gry",
-		"pra", "pre", "pri", "pro", "pru", "pry",
-		"sta", "ste", "sti", "sto", "stu", "sty",
-		"tra", "tre"
-	};
-	uintptr_t u = reinterpret_cast<uintptr_t>(&n);
-	out << std::hex << u << std::endl;
+	if (names.find(&n) != names.end()) {
+		// we've already printed this node; no need to do it again
+		return;
+	}
+	std::string def = makename(n) + ": ";
+	if (def.size() < 12) {
+		std::string blank(12 - def.size(), ' ');
+		def = blank + def;
+	}
+	out << def << text << std::endl;
+}
+
+std::string printer::makename(const dfg::node &n)
+{
+	// Generate a name for this node based on its address. We'll shift the
+	// address over by 4 since allocations are always word-aligned, then use
+	// enough bytes of the address to guarantee uniqueness.
+	static std::vector<std::string> koremutake;
+	if (koremutake.empty()) {
+		koremutake.resize(128, "");
+		const char *i =
+			"BA BE BI BO BU BY DA DE DI DO DU DY FA FE FI FO FU FY GA GE GI "
+			"GO GU GY HA HE HI HO HU HY JA JE JI JO JU JY KA KE KI KO KU KY "
+			"LA LE LI LO LU LY MA ME MI MO MU MY NA NE NI NO NU NY PA PE PI "
+			"PO PU PY RA RE RI RO RU RY SA SE SI SO SU SY TA TE TI TO TU TY "
+			"VA VE VI VO VU VY BRA BRE BRI BRO BRU BRY DRA DRE DRI DRO DRU "
+			"DRY FRA FRE FRI FRO FRU FRY GRA GRE GRI GRO GRU GRY PRA PRE PRI "
+			"PRO PRU PRY STA STE STI STO STU STY TRA TRE ";
+		for (auto &str: koremutake) {
+			const char *end = i;
+			while (' ' != *end) ++end;
+			str = std::string(i, end - i);
+			i = ++end;
+		}
+	}
+	uintptr_t u = reinterpret_cast<uintptr_t>(&n) >> 2;
+	std::string name;
+	do {
+		name += koremutake[u & 0x7F];
+		u >>= 7;
+	} while (used.find(name) != used.end());
+	used.insert(name);
+	names[&n] = "%" + name;
+	return name;
 }
 
 void print(const dfg::block &src, std::ostream &out)

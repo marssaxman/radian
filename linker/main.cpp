@@ -28,9 +28,9 @@ int main(int argc, const char *argv[])
 	tdfl::code test = {
         "              sum *0 *1",
 		"valid:        ord ^ $0A",
-		"              all $1",
+		"              all %valid $1",
 	};
-	dfg::block code = std::move(tdfl::build(test, log));
+	dfg::block code = tdfl::build(test, log);
 	tdfl::print(code, std::cout);
 
 	return log.empty()? EXIT_SUCCESS: EXIT_FAILURE;

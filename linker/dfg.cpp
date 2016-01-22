@@ -72,17 +72,15 @@ void variadic::accept(visitor &v) const
 	v.visit(*this);
 }
 
+block::block()
+{
+	code.emplace_back(new param_val);
+}
+
 void block::accept(visitor &v) const
 {
 	code.back()->accept(v);
 }
-
-builder::builder():
-	param(*new param_val())
-{
-	code.emplace_back(&param);
-}
-
 
 } // namespace dfg
 
