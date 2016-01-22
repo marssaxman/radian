@@ -17,21 +17,20 @@
 #include <fstream>
 #include "assembler.h"
 #include "logstream.h"
+#include "tdfl.h"
 
 int main(int argc, const char *argv[])
 {
 	// Read in an array of function DFGs, link them together, and write them
 	// out as a bootable kernel image.
 	logstream log(std::string(argv[0]) + ": ", std::cerr);
-	if (argc <= 1) {
-		log << "no input files" << std::endl;
-	}
-	for (int i = 1; i < argc; ++i) {
-		std::string path(argv[i]);
-		std::ifstream src(path);
-		logstream err(path + ":", log);
-		// do something
-	}
+
+	tdfl::block test = {
+		{"s", "sum", {"*0", "*1"}},
+		{"b", "ord", {"%s", "$0A"}},
+	};
+	tdfl::build(test, log);
+
 	return log.empty()? EXIT_SUCCESS: EXIT_FAILURE;
 }
 
