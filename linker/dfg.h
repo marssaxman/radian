@@ -120,11 +120,11 @@ struct variadic: public node
 	enum opcode
 	{
 		sum,
-		all,
-		any,
-		equ,
-		ord,
-		asc,
+		andl,
+		orl,
+		cpeq,
+		cpge,
+		cpgt,
 		tuple,
 		array,
 		cat,

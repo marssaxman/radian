@@ -26,18 +26,17 @@ namespace tdfl { // test data flow language
 // instruction names:
 //   unary: notl, test, null, peek, next
 //   binary: diff, xorl, item, head, skip, tail, drop
-//   ternary: cond
-//   variadic: sum, all, any, equ, ord, asc, tuple, array, cat
+//   ternary: sel
+//   variadic: sum, andl, orl, cpeq, cpge, cpgt, tuple, array, cat
 // operand syntax:
-//   $digits - integer literal (unsigned, hex)
+//   $digits - integer literal (hexadecimal)
 //	 _name - link reference to another block
 //	 %name - value of a symbol previously defined in this block
 //	 * - parameter value for this function invocation
-//	 *digits - value of numbered field in parameter tuple
 //	 ^ - value produced by the previous instruction
-//   @digits(operand) - value of numbered field in operand tuple
+//	 number['(' operand ')'] - Nth field of tuple; parameter is default value
 // instruction syntax:
-// [name':'] instruction [operand [',' operand]*] ['#'comment]
+// [name':'] instruction [operand [',' operand]*] ['#' comment]
 
 typedef std::vector<std::string> code;
 dfg::block build(const code &input, std::ostream &log);

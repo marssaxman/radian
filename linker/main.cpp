@@ -26,9 +26,9 @@ int main(int argc, const char *argv[])
 	logstream log(std::string(argv[0]) + ": ", std::cerr);
 
 	tdfl::code test = {
-        "              sum *0 *1",
-		"valid:        ord ^ $0A",
-		"              all %valid $1",
+        "              sum 0, 1",
+		"valid:        cpge ^, $0A",
+		"              andl %valid, $1",
 	};
 	dfg::block code = tdfl::build(test, log);
 	tdfl::print(code, std::cout);

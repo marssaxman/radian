@@ -16,11 +16,17 @@
 #include <map>
 #include <deque>
 #include <sstream>
+#include <iomanip>
 #include <assert.h>
 #include <set>
 #include "tdfl.h"
 
 namespace tdfl {
+
+using std::string;
+using std::vector;
+using std::deque;
+using std::map;
 
 typedef std::reference_wrapper<dfg::node> node_ref;
 
@@ -29,21 +35,22 @@ struct builder
 	size_t line_no = 0;
 	std::ostream &err;
 	builder(const code &s, std::ostream &errlog);
-	dfg::node &literal(std::string);
-	dfg::node &lookup(std::string);
-	dfg::node &linkref(std::string);
-	dfg::node &field(std::string);
-	dfg::node &param(std::string);
-	dfg::node &operand(std::string);
-	dfg::node &inst(std::string op, std::deque<std::string> &tokens);
-	dfg::node &def(std::string def, std::deque<std::string> &tokens);
-	void eval(std::deque<std::string> &tokens);
+	dfg::node &literal(string);
+	dfg::node &lookup(string);
+	dfg::node &linkref(string);
+	dfg::node &param(string);
+	dfg::node &field(string);
+	dfg::node &operand(string);
+	dfg::node &inst(string op, deque<string> &tokens);
+	dfg::node &def(string def, deque<string> &tokens);
+	void eval(deque<string> &tokens);
+	void parse(const string &line);
 	dfg::block dest;
-	std::map<std::string, dfg::node*> symbols;
+	map<string, dfg::node*> symbols;
 	node_ref result;
 };
 
-dfg::node &builder::literal(std::string s)
+dfg::node &builder::literal(string s)
 {
 	uint32_t val = 0;
 	for (char c: s) {
@@ -63,7 +70,7 @@ dfg::node &builder::literal(std::string s)
 	return dest.make<dfg::literal_int>(val);
 }
 
-dfg::node &builder::lookup(std::string s)
+dfg::node &builder::lookup(string s)
 {
 	auto iter = symbols.find(s);
 	if (iter == symbols.end()) {
@@ -75,12 +82,12 @@ dfg::node &builder::lookup(std::string s)
 	}
 }
 
-dfg::node &builder::linkref(std::string s)
+dfg::node &builder::linkref(string s)
 {
 	return dest.make<dfg::block_ref>(s);
 }
 
-dfg::node &builder::field(std::string s)
+dfg::node &builder::field(string s)
 {
 	// Collect digits until we reach a left paren, then evaluate whatever is
 	// inside the parens and generate a reference to one of its fields.
@@ -90,55 +97,54 @@ dfg::node &builder::field(std::string s)
 		index = index * 10 + s.front() - '0';
 		++iter;
 	}
-	// The next char should be a left paren and the last char should be a
-	// right paren, and the text in between should be an operand.
-	if (iter == s.end() || *iter != '(' || s.back() != ')') {
+	// If we've reached the end of the string, and the whole token was just
+	// a number, that refers to a field of the parameter, which is usually a
+	// tuple and so benefits from this convenient shorthand.
+	if (iter == s.end()) {
+		return dest.make<dfg::field>(dest.param(), index);
+	}
+	// If we have not reached the end of the string, the next char should be
+	// a left paren and the last char should be a right paren. We will evaluate
+	// the text in between as an operand expression and use it as the source.
+	if (*iter != '(' || s.back() != ')') {
 		err << line_no << ": expected a field reference token" << std::endl;
 		return dest.make<dfg::error>();
 	}
-	dfg::node &tuple = operand(std::string(iter, s.end() - 1));
+	dfg::node &tuple = operand(string(iter, s.end() - 1));
 	return dest.make<dfg::field>(tuple, index);
 }
 
-dfg::node &builder::param(std::string s)
+dfg::node &builder::param(string s)
 {
-	if (s.empty()) {
-		return dest.param();
+	if (!s.empty()) {
+		err << line_no << ": unexpected char in param token \"" <<
+				s << "\"" << std::endl;
+		return dest.make<dfg::error>();
 	}
-	uint32_t index = 0;
-	for (char c: s) {
-		if (isdigit(c)) {
-			index = index * 10 + c - '0';
-		} else {
-			err << line_no << ": unexpected non-digit char in param \"" <<
-					s << "\"" << std::endl;
-			return dest.make<dfg::error>();
-		}
-	}
-	return dest.make<dfg::field>(dest.param(), index);
+	return dest.param();
 }
 
-dfg::node &builder::operand(std::string s)
+dfg::node &builder::operand(string s)
 {
 	if (s.empty()) {
 		err << line_no << ": expected a non-empty operand here" << std::endl;
 		return dest.make<dfg::error>();
 	}
-	std::string rest = s.substr(1);
+	string rest = s.substr(1);
 	switch (s.front()) {
 		case '$': return literal(rest);
 		case '%': return lookup(rest);
 		case '_': return linkref(rest);
-		case '@': return field(rest);
 		case '*': return param(rest);
 		case '^': if (rest.empty()) return result;
-		default: err << line_no << ": illegal operand token \"" <<
-				s << "\"" << std::endl;
+		default: if (isdigit(s.front())) return field(s);
+			err << line_no << ": illegal operand token \"" <<
+					s << "\"" << std::endl;
 	}
 	return dest.make<dfg::error>();
 }
 
-dfg::node &builder::inst(std::string op, std::deque<std::string> &argtokens)
+dfg::node &builder::inst(string op, deque<string> &argtokens)
 {
 	struct info
 	{
@@ -151,7 +157,7 @@ dfg::node &builder::inst(std::string op, std::deque<std::string> &argtokens)
 			dfg::binary::opcode bin_op;
 		};
 	};
-	static std::map<std::string, info> language = {
+	static map<string, info> language = {
 		{"notl", {1, dfg::unary::notl}},
 		{"test", {1, dfg::unary::test}},
 		{"null", {1, dfg::unary::null}},
@@ -164,13 +170,13 @@ dfg::node &builder::inst(std::string op, std::deque<std::string> &argtokens)
 		{"skip", {2, dfg::binary::skip}},
 		{"tail", {2, dfg::binary::tail}},
 		{"drop", {2, dfg::binary::drop}},
-		{"cond", {3}},
+		{"sel", {3}},
 		{"sum", {0, dfg::variadic::sum}},
-		{"all", {0, dfg::variadic::all}},
-		{"any", {0, dfg::variadic::any}},
-		{"equ", {0, dfg::variadic::equ}},
-		{"ord", {0, dfg::variadic::ord}},
-		{"asc", {0, dfg::variadic::asc}},
+		{"andl", {0, dfg::variadic::andl}},
+		{"orl", {0, dfg::variadic::orl}},
+		{"cpeq", {0, dfg::variadic::cpeq}},
+		{"cpge", {0, dfg::variadic::cpge}},
+		{"cpgt", {0, dfg::variadic::cpgt}},
 		{"tuple", {0, dfg::variadic::tuple}},
 		{"array", {0, dfg::variadic::array}},
 		{"cat", {0, dfg::variadic::cat}},
@@ -187,12 +193,7 @@ dfg::node &builder::inst(std::string op, std::deque<std::string> &argtokens)
 		return dest.make<dfg::error>();
 	}
 	struct info ii = langiter->second;
-	std::vector<node_ref> vals;
-	if (argtokens.size() < ii.arity) {
-		// The leftmost operand may be ommitted, implicitly referencing the
-		// result of the previous operation.
-		vals.push_back(result);
-	}
+	vector<node_ref> vals;
 	for (auto &token: argtokens) {
 		vals.push_back(operand(token));
 	}
@@ -215,13 +216,13 @@ dfg::node &builder::inst(std::string op, std::deque<std::string> &argtokens)
 	}
 }
 
-dfg::node &builder::def(std::string def, std::deque<std::string> &tokens)
+dfg::node &builder::def(string def, deque<string> &tokens)
 {
 	if (tokens.empty()) {
 		err << line_no << ": definition with no value" << std::endl;
 		return dest.make<dfg::error>();
 	}
-	std::string name = tokens.front();
+	string name = tokens.front();
 	tokens.pop_front();
 	dfg::node &out = inst(name, tokens);
 	auto iter = symbols.find(def);
@@ -233,12 +234,12 @@ dfg::node &builder::def(std::string def, std::deque<std::string> &tokens)
 	return out;
 }
 
-void builder::eval(std::deque<std::string> &tokens)
+void builder::eval(deque<string> &tokens)
 {
 	if (tokens.empty()) {
 		return;
 	}
-	std::string front = tokens.front();
+	string front = tokens.front();
 	tokens.pop_front();
 	if (front.back() == ':') {
 		front.pop_back();
@@ -248,28 +249,34 @@ void builder::eval(std::deque<std::string> &tokens)
 	}
 }
 
+void builder::parse(const string &line)
+{
+	deque<string> tokens;
+	std::istringstream input(line);
+	std::string token;
+	while (input >> std::skipws >> token) {
+		if (token.empty()) {
+			continue;
+		}
+		if (token.front() == '#') {
+			// comment
+			break;
+		}
+		if (token.back() == ',') {
+			// optional argument separator
+			token.pop_back();
+		}
+		tokens.push_back(token);
+	}
+	eval(tokens);
+}
+
 builder::builder(const code &s, std::ostream &errlog):
 	err(errlog),
 	result(dest.param())
 {
 	for (auto &line: s) {
-		std::deque<std::string> tokens;
-		auto begin = line.begin();
-		for(;;) {
-			while (isspace(*begin) && begin != line.end()) {
-				++begin;
-			}
-			auto end = begin;
-			while (!isspace(*end) && end != line.end()) {
-				++end;
-			}
-			if (end == begin) {
-				break;
-			}
-			tokens.emplace_back(begin, end);
-			begin = end;
-		}
-		eval(tokens);
+		parse(line);
 		++line_no;
 	}
 }
@@ -292,8 +299,7 @@ struct printer: public dfg::visitor
 	virtual void visit(const dfg::binary&) override;
 	virtual void visit(const dfg::select&) override;
 	virtual void visit(const dfg::variadic&) override;
-	void emitinst(const dfg::node &n, std::vector<std::string> args);
-	void emitline(const dfg::node &n, std::string text);
+	void emit(const dfg::node&, std::string op, std::vector<std::string> args);
 	std::string sym(const dfg::node &n) { return names[&n]; }
 	std::string makename(const dfg::node &n);
 	std::map<const dfg::node*, std::string> names;
@@ -303,14 +309,14 @@ struct printer: public dfg::visitor
 
 void printer::visit(const dfg::error &n)
 {
-	emitline(n, "!error!");
+	names[&n] = "!error!";
 }
 
 void printer::visit(const dfg::literal_int &n)
 {
 	std::stringstream ss;
 	ss << std::hex << n.value;
-	std::string s = ss.str();
+	string s = ss.str();
 	names[&n] = ((s.size() & 1)? "$0": "$") + s;
 }
 
@@ -326,7 +332,7 @@ void printer::visit(const dfg::block_ref &n)
 
 void printer::visit(const dfg::unary &n)
 {
-	std::string op;
+	string op;
 	switch (n.op) {
 		case dfg::unary::notl: op = "notl"; break;
 		case dfg::unary::test: op = "test"; break;
@@ -334,25 +340,24 @@ void printer::visit(const dfg::unary &n)
 		case dfg::unary::peek: op = "peek"; break;
 		case dfg::unary::next: op = "next"; break;
 	}
-	emitinst(n, {op, sym(n.source)});
+	emit(n, op, {sym(n.source)});
 }
 
 void printer::visit(const dfg::field &n)
 {
-	std::string source = sym(n.source);
+	string source = sym(n.source);
 	std::stringstream ss;
 	ss << std::dec << n.index;
-	std::string index = ss.str();
-	if (source == "*") {
-		names[&n] = source + index;
-	} else {
-		names[&n] = "@" + index + "(" + source + ")";
+	string index = ss.str();
+	if (source != "*") {
+		index += "(" + source + ")";
 	}
+	names[&n] = index;
 }
 
 void printer::visit(const dfg::binary &n)
 {
-	std::string op;
+	string op;
 	switch (n.op) {
 		case dfg::binary::diff: op = "diff"; break;
 		case dfg::binary::xorl: op = "xorl"; break;
@@ -362,67 +367,58 @@ void printer::visit(const dfg::binary &n)
 		case dfg::binary::tail: op = "tail"; break;
 		case dfg::binary::drop: op = "drop"; break;
 	}
-	emitinst(n, {op, sym(n.left), sym(n.right)});
+	emit(n, op, {sym(n.left), sym(n.right)});
 }
 
 void printer::visit(const dfg::select &n)
 {
-	emitinst(n, {"cond", sym(n.cond), sym(n.thenval), sym(n.elseval)});
+	emit(n, "sel", {sym(n.cond), sym(n.thenval), sym(n.elseval)});
 }
 
 void printer::visit(const dfg::variadic &n)
 {
-	std::string op;
+	string op;
 	switch (n.op) {
 		case dfg::variadic::sum: op = "sum"; break;
-		case dfg::variadic::all: op = "all"; break;
-		case dfg::variadic::any: op = "any"; break;
-		case dfg::variadic::equ: op = "equ"; break;
-		case dfg::variadic::ord: op = "ord"; break;
-		case dfg::variadic::asc: op = "asc"; break;
+		case dfg::variadic::andl: op = "andl"; break;
+		case dfg::variadic::orl: op = "orl"; break;
+		case dfg::variadic::cpeq: op = "cpeq"; break;
+		case dfg::variadic::cpge: op = "cpge"; break;
+		case dfg::variadic::cpgt: op = "cpgt"; break;
 		case dfg::variadic::tuple: op = "tuple"; break;
 		case dfg::variadic::array: op = "array"; break;
 		case dfg::variadic::cat: op = "cat"; break;
 	}
-	std::vector<std::string> tokens(1, op);
+	vector<string> tokens;
 	for (auto &i: n.sources) {
 		tokens.push_back(sym(i.get()));
 	}
-	emitinst(n, tokens);
+	emit(n, op, tokens);
 }
 
-void printer::emitinst(const dfg::node &n, std::vector<std::string> tokens)
-{
-	std::stringstream ss;
-	for (auto iter = tokens.begin(); iter != tokens.end();) {
-		ss << *iter;
-		if (++iter != tokens.end()) {
-			ss << " ";
-		}
-	}
-	emitline(n, ss.str());
-}
-
-void printer::emitline(const dfg::node &n, std::string text)
+void printer::emit(const dfg::node &n, string op, vector<string> args)
 {
 	if (names.find(&n) != names.end()) {
 		// we've already printed this node; no need to do it again
 		return;
 	}
-	std::string def = makename(n) + ": ";
-	if (def.size() < 12) {
-		std::string blank(12 - def.size(), ' ');
-		def = blank + def;
+	out << std::right << std::setw(10) << makename(n) + ": ";
+	out << std::left << std::setw(6) << op << std::setw(1);
+	for (auto iter = args.begin(); iter != args.end();) {
+		out << *iter;
+		if (++iter != args.end()) {
+			out << ", ";
+		}
 	}
-	out << def << text << std::endl;
+	out << std::endl;
 }
 
-std::string printer::makename(const dfg::node &n)
+string printer::makename(const dfg::node &n)
 {
 	// Generate a name for this node based on its address. We'll shift the
 	// address over by 4 since allocations are always word-aligned, then use
 	// enough bytes of the address to guarantee uniqueness.
-	static std::vector<std::string> koremutake;
+	static vector<string> koremutake;
 	if (koremutake.empty()) {
 		koremutake.resize(128, "");
 		const char *i =
@@ -441,7 +437,7 @@ std::string printer::makename(const dfg::node &n)
 		}
 	}
 	uintptr_t u = reinterpret_cast<uintptr_t>(&n) >> 2;
-	std::string name;
+	string name;
 	do {
 		name += koremutake[u & 0x7F];
 		u >>= 7;
