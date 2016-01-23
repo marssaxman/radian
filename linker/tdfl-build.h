@@ -13,8 +13,8 @@
 // You should have received a copy of the GNU General Public License along with
 // Radian. If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef TDFL_H
-#define TDFL_H
+#ifndef TDFL_BUILD_H
+#define TDFL_BUILD_H
 
 #include <string>
 #include <vector>
@@ -23,11 +23,6 @@
 
 namespace tdfl { // test data flow language
 
-// instruction names:
-//   unary: jump, notl, test, null, peek, next
-//   binary: call, bind, diff, xorl, item, head, skip, tail, drop
-//   ternary: brcc, cond, loop
-//   variadic: sum, andl, orl, cpeq, cpge, cpgt, tuple, array, cat
 // operand syntax:
 //   $digits - integer literal (hexadecimal)
 //	 _name - link reference to another block
@@ -42,8 +37,7 @@ namespace tdfl { // test data flow language
 
 typedef std::vector<std::string> code;
 dfg::unit build(const code &input, std::ostream &log);
-void print(const dfg::unit&, std::ostream&);
 
 }
 
-#endif //TDFL_H
+#endif //TDFL_BUILD_H

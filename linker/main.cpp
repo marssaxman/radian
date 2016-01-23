@@ -17,7 +17,8 @@
 #include <fstream>
 #include "assembler.h"
 #include "logstream.h"
-#include "tdfl.h"
+#include "tdfl-build.h"
+#include "tdfl-print.h"
 
 int main(int argc, const char *argv[])
 {

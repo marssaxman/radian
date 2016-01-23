@@ -64,12 +64,8 @@ struct unary: public node
 {
 	enum opcode
 	{
-		jump,
-		notl,
-		test,
-		null,
-		peek,
-		next,
+#define UNARY(x) x,
+#include "operators.h"
 	};
 	unary(opcode o, node &s): node(), op(o), source(s) {}
 	virtual void accept(visitor &v) const override;
@@ -90,15 +86,8 @@ struct binary: public node
 {
 	enum opcode
 	{
-		call,
-		bind,
-		diff,
-		xorl,
-		item,
-		head,
-		skip,
-		tail,
-		drop,
+#define BINARY(x) x,
+#include "operators.h"
 	};
 	binary(opcode o, node &l, node &r):
 		node(), op(o), left(l), right(r) {}
@@ -112,9 +101,8 @@ struct ternary: public node
 {
 	enum opcode
 	{
-		bcc,
-		sel,
-		loop,
+#define TERNARY(x) x,
+#include "operators.h"
 	};
 	ternary(opcode o, node &c, node &t, node &e):
 		node(), op(o), cond(c), thenval(t), elseval(e) {}
@@ -129,15 +117,8 @@ struct variadic: public node
 {
 	enum opcode
 	{
-		sum,
-		andl,
-		orl,
-		cpeq,
-		cpge,
-		cpgt,
-		tuple,
-		array,
-		cat,
+#define VARIADIC(x) x,
+#include "operators.h"
 	};
 	variadic(opcode o, const std::vector<std::reference_wrapper<node>> &s):
 		node(), op(o), sources(s) {}
