@@ -1,20 +1,21 @@
-_add1.ii:
+_add1.ww(w):
 	a:		0
 	b:		1
-			sum %a, %b
+	temp:	addw %a, %b
+			jump 2, %temp
 
-_add2.ii:
+_add2.ww(w):
 			cpeq 0, $0
-			sel ^, _done.ii, _recurse.ii
-			call ^, *
+			sel ^, _done.ww(w), _recurse.ww(w)
+			jump ^, *
 
-_recurse.ii:
-	tmp2:	diff 0, $1
-	tmp3:	diff 1, $1",
-	tmp4:	tuple %tmp2, %tmp3
-			call _add2.ii, %tmp4
+_recurse.ww(w):
+	tmp2:	subw 0, $1
+	tmp3:	subw 1, $1
+	tmp4:	tuple %tmp2, %tmp3, 2
+			jump _add2.ii, %tmp4
 
-_done.ii:
-			1
+_done.ww(w):
+			jump 2, 1
 
 
