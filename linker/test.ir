@@ -1,0 +1,20 @@
+_add1.ii:
+	a:		0
+	b:		1
+			sum %a, %b
+
+_add2.ii:
+			cpeq 0, $0
+			sel ^, _done, _recurse
+			call ^, *
+
+_recurse.ii:
+	tmp2:	diff 0, $1
+	tmp3:	diff 1, $1",
+	tmp4:	tuple %tmp2, %tmp3
+			call _add2.ii, %tmp4
+
+_done.ii:
+			1
+
+

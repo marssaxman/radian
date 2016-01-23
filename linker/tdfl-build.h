@@ -16,8 +16,6 @@
 #ifndef TDFL_BUILD_H
 #define TDFL_BUILD_H
 
-#include <string>
-#include <vector>
 #include <iostream>
 #include "dfg.h"
 
@@ -35,8 +33,7 @@ namespace tdfl { // test data flow language
 // If the line declares a link name, this implicitly closes the previous
 // block and opens a new one with a new local symbol table.
 
-typedef std::vector<std::string> code;
-dfg::unit build(const code &input, std::ostream &log);
+dfg::unit build(std::istream &src, std::ostream &log);
 
 }
 

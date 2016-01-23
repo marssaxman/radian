@@ -33,9 +33,9 @@ typedef std::reference_wrapper<dfg::node> node_ref;
 
 struct builder
 {
-	size_t line_no = 0;
+	size_t line_no = 1;
 	std::ostream &err;
-	builder(const code &s, std::ostream &errlog);
+	builder(std::istream &s, std::ostream &errlog);
 	void literal(string);
 	void lookup(string);
 	void linkref(string);
@@ -275,18 +275,17 @@ std::ostream &builder::report()
 	return err;
 }
 
-builder::builder(const code &s, std::ostream &errlog):
+builder::builder(std::istream &src, std::ostream &errlog):
 	err(errlog),
 	block(unit.make("start")),
 	result(block.get().param())
 {
-	for (auto &line: s) {
+	for (string line; std::getline(src, line); ++line_no) {
 		parse(line);
-		++line_no;
 	}
 }
 
-dfg::unit build(const code &src, std::ostream &errlog)
+dfg::unit build(std::istream &src, std::ostream &errlog)
 {
 	return builder(src, errlog).unit;
 }

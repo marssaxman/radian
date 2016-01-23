@@ -25,27 +25,16 @@ int main(int argc, const char *argv[])
 	// Read in an array of function DFGs, link them together, and write them
 	// out as a bootable kernel image.
 	logstream log(std::string(argv[0]) + ": ", std::cerr);
-
-	tdfl::code test = {
-		"_add1.ii:",
-		"a:		0",
-		"b:		1",
-		"		sum %a, %b",
-		"_add2.ii:",
-		"		cpeq 0, $0",
-		"		sel ^, _done, _recurse",
-		"		call ^, *",
-		"_recurse.ii:",
-		"tmp2:	diff 0, $1",
-		"tmp3:	diff 1, $1",
-		"tmp4:	tuple %tmp2, %tmp3",
-		"		call _add2.ii, %tmp4",
-		"_done.ii: 1",
-	};
-
-	dfg::unit code = tdfl::build(test, log);
-	tdfl::print(code, std::cout);
-
+	if (argc <= 1) {
+		log << "fail: no input files" << std::endl;
+	}
+	for (int i = 1; i < argc; ++i) {
+		std::string path(argv[i]);
+		std::ifstream src(path);
+		logstream err(path + ":", log);
+		dfg::unit code = tdfl::build(src, log);
+		tdfl::print(code, std::cout);
+	}
 	return log.empty()? EXIT_SUCCESS: EXIT_FAILURE;
 }
 
