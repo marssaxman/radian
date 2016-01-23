@@ -19,9 +19,9 @@
 #include <iomanip>
 #include <assert.h>
 #include <set>
-#include "tdfl-print.h"
+#include "printer.h"
 
-namespace tdfl {
+namespace {
 
 using std::string;
 using std::vector;
@@ -46,17 +46,18 @@ struct printer: public dfg::visitor
 	virtual void enter(const dfg::block&) override;
 	virtual void leave(const dfg::block&) override;
 	void emit(const dfg::node&, string op, vector<string> args);
-	string sym(const dfg::node &n) { return names[&n]; }
+	string sym(const dfg::node &n);
+	string def(std::string name, const dfg::node &n);
 	string makename(const dfg::node &n);
 	map<const dfg::node*, string> names;
 	set<std::string> used;
-	string last_emit_def;
+	string last_def;
 	std::ostream &out;
 };
 
 void printer::visit(const dfg::error &n)
 {
-	names[&n] = "!error!";
+	def("!error!", n);
 }
 
 void printer::visit(const dfg::literal_int &n)
@@ -64,17 +65,17 @@ void printer::visit(const dfg::literal_int &n)
 	std::stringstream ss;
 	ss << std::hex << n.value;
 	string s = ss.str();
-	names[&n] = ((s.size() & 1)? "$0": "$") + s;
+	def(((s.size() & 1)? "$0": "$") + s, n);
 }
 
 void printer::visit(const dfg::param_val &n)
 {
-	names[&n] = "*";
+	def("*", n);
 }
 
 void printer::visit(const dfg::block_ref &n)
 {
-	names[&n] = "_" + n.link_id;
+	def("_" + n.link_id, n);
 }
 
 void printer::leave(const dfg::unary &n)
@@ -96,7 +97,7 @@ void printer::leave(const dfg::field &n)
 	if (source != "*") {
 		index += "(" + source + ")";
 	}
-	names[&n] = index;
+	def(index, n);
 }
 
 void printer::leave(const dfg::binary &n)
@@ -138,13 +139,14 @@ void printer::enter(const dfg::block &b)
 	out << "_" << b.link_id() << ":" << std::endl;
 	names.clear();
 	used.clear();
+	last_def.clear();
 }
 
 void printer::leave(const dfg::block &b)
 {
 	out << std::right << std::setw(10) << " ";
-	out << std::left << std::setw(6) << last_emit_def << endl;
-	last_emit_def.clear();
+	out << std::left << std::setw(6) << last_def << endl;
+	last_def.clear();
 }
 
 void printer::emit(const dfg::node &n, string op, vector<string> args)
@@ -162,6 +164,18 @@ void printer::emit(const dfg::node &n, string op, vector<string> args)
 		}
 	}
 	out << std::endl;
+}
+
+string printer::sym(const dfg::node &n)
+{
+	return names[&n];
+}
+
+string printer::def(string name, const dfg::node &n)
+{
+	names[&n] = name;
+	last_def = name;
+	return name;
 }
 
 string printer::makename(const dfg::node &n)
@@ -194,16 +208,15 @@ string printer::makename(const dfg::node &n)
 		u >>= 7;
 	} while (used.find(name) != used.end());
 	used.insert(name);
-	last_emit_def = "%" + name;
-	names[&n] = last_emit_def;
-	return name;
+	return def("%" + name, n);
 }
 
-void print(const dfg::unit &src, std::ostream &out)
+} // namespace
+
+std::ostream& operator<<(std::ostream &out, const dfg::unit &src)
 {
 	printer p(out);
 	src.accept(p);
+	return out;
 }
-
-} // namespace tdfl
 

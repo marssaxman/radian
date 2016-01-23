@@ -5,7 +5,7 @@ _add1.ii:
 
 _add2.ii:
 			cpeq 0, $0
-			sel ^, _done, _recurse
+			sel ^, _done.ii, _recurse.ii
 			call ^, *
 
 _recurse.ii:

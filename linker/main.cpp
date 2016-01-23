@@ -17,8 +17,8 @@
 #include <fstream>
 #include "assembler.h"
 #include "logstream.h"
-#include "tdfl-build.h"
-#include "tdfl-print.h"
+#include "reader.h"
+#include "printer.h"
 
 int main(int argc, const char *argv[])
 {
@@ -32,8 +32,8 @@ int main(int argc, const char *argv[])
 		std::string path(argv[i]);
 		std::ifstream src(path);
 		logstream err(path + ":", log);
-		dfg::unit code = tdfl::build(src, log);
-		tdfl::print(code, std::cout);
+		dfg::unit code = read(src, log);
+		std::cout << code;
 	}
 	return log.empty()? EXIT_SUCCESS: EXIT_FAILURE;
 }

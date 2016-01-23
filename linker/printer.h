@@ -13,16 +13,12 @@
 // You should have received a copy of the GNU General Public License along with
 // Radian. If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef TDFL_PRINT_H
-#define TDFL_PRINT_H
+#ifndef PRINTER_H
+#define PRINTER_H
 
 #include <iostream>
 #include "dfg.h"
 
-namespace tdfl { // test data flow language
+std::ostream& operator<<(std::ostream&, const dfg::unit&);
 
-void print(const dfg::unit&, std::ostream&);
-
-}
-
-#endif //TDFL_PRINT_H
+#endif //PRINTER_H

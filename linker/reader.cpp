@@ -19,9 +19,9 @@
 #include <iomanip>
 #include <assert.h>
 #include <set>
-#include "tdfl-build.h"
+#include "reader.h"
 
-namespace tdfl {
+namespace {
 
 using std::string;
 using std::vector;
@@ -285,10 +285,10 @@ builder::builder(std::istream &src, std::ostream &errlog):
 	}
 }
 
-dfg::unit build(std::istream &src, std::ostream &errlog)
+} // namespace
+
+dfg::unit read(std::istream &src, std::ostream &errlog)
 {
 	return builder(src, errlog).unit;
 }
-
-} // namespace tdfl
 

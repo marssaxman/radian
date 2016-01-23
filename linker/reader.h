@@ -13,13 +13,11 @@
 // You should have received a copy of the GNU General Public License along with
 // Radian. If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef TDFL_BUILD_H
-#define TDFL_BUILD_H
+#ifndef READER_H
+#define READER_H
 
 #include <iostream>
 #include "dfg.h"
-
-namespace tdfl { // test data flow language
 
 // operand syntax:
 //   $digits - integer literal (hexadecimal)
@@ -33,8 +31,6 @@ namespace tdfl { // test data flow language
 // If the line declares a link name, this implicitly closes the previous
 // block and opens a new one with a new local symbol table.
 
-dfg::unit build(std::istream &src, std::ostream &log);
+dfg::unit read(std::istream &src, std::ostream &log);
 
-}
-
-#endif //TDFL_BUILD_H
+#endif //READER_H
