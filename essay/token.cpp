@@ -21,7 +21,7 @@ static bool isident(char c)
 	return isalnum(c) || '_' == c;
 }
 
-static bool isopcode(char c)
+static bool isoperator(char c)
 {
 	switch (c) {
 		case '!':
@@ -87,11 +87,42 @@ token::token(std::string::const_iterator pos, std::string::const_iterator end):
 				while (pos < end && isident(*pos)) ++pos;
 			} else if (ispunct(c)) {
 				type = opcode;
-				while (pos < end && isopcode(*pos)) ++pos;
+				while (pos < end && isoperator(*pos)) ++pos;
 			}
 	} else {
 		type = eof;
 	}
 	this->end = pos;
 }
+
+bool token::operator==(const token &other) const
+{
+	return this->begin == other.begin && this->end == other.end;
+}
+
+bool token::operator!=(const token &other) const
+{
+	return !(*this == other);
+}
+
+lexer::lexer(std::string::const_iterator b, std::string::const_iterator e):
+	value(b, e), enditer(e)
+{
+}
+
+lexer &lexer::operator++()
+{
+	return *this = lexer(value.end, enditer);
+}
+
+bool lexer::operator==(const lexer &other) const
+{
+	return this->value == other.value && this->enditer == other.enditer;
+}
+
+bool lexer::operator!=(const lexer &other) const
+{
+	return !(*this == other);
+}
+
 

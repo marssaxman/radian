@@ -18,8 +18,9 @@
 
 #include <string>
 
-struct token
-{
+struct token {
+	std::string::const_iterator begin;
+	std::string::const_iterator end;
 	enum {
 		error = -1,
 		eof = 0,
@@ -27,8 +28,8 @@ struct token
 		literal,
 		symbol,
 		opcode,
-		comma, // separator
-		semicolon, // terminator
+		comma,
+		semicolon,
 		lparen,
 		rparen,
 		lbracket,
@@ -37,11 +38,30 @@ struct token
 		rbrace,
 		newline
 	} type;
-	std::string::const_iterator begin;
-	std::string::const_iterator end;
-	operator int() const { return type; }
-	std::string operator*() const { return std::string(begin, end); }
+	std::string text() const { return std::string(begin, end); }
+	std::string operator*() const { return text(); }
 	token(std::string::const_iterator pos, std::string::const_iterator end);
+	bool operator==(const token &other) const;
+	bool operator!=(const token &other) const;
+};
+
+// lexer: iterator through a string that returns tokens
+// knows whether it is done or not
+
+class lexer
+{
+	token value;
+	std::string::const_iterator enditer;
+public:
+	lexer(const std::string &input): lexer(input.begin(), input.end()) {}
+	lexer(std::string::const_iterator b, std::string::const_iterator e);
+	operator bool() const { return value.begin != enditer; }
+	const token &operator*() const { return value; }
+	lexer &operator++();
+	lexer begin() { return *this; }
+	lexer end() { return lexer(enditer, enditer); }
+	bool operator==(const lexer&) const;
+	bool operator!=(const lexer&) const;
 };
 
 #endif //TOKEN_H

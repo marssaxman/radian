@@ -35,13 +35,9 @@ int main(int argc, const char *argv[])
 			std::stringstream buf;
 			buf << src.rdbuf();
 			src.close();
-
-
 			std::string text = buf.str();
-			std::string::const_iterator pos = text.begin();
-			while (pos != text.end()) {
-				token foo(pos, text.end());
-				pos = foo.end;
+			lexer input(text);
+			for (token foo: input) {
 				switch (foo.type) {
 					case token::error:
 						log << "error";
