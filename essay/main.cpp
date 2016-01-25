@@ -38,11 +38,10 @@ int main(int argc, const char *argv[])
 
 
 			std::string text = buf.str();
-			const char *pos = text.c_str();
-			const char *end = pos + text.size();
-			while (pos != end) {
-				token foo(pos, end);
-				pos = foo.addr + foo.len;
+			std::string::const_iterator pos = text.begin();
+			while (pos != text.end()) {
+				token foo(pos, text.end());
+				pos = foo.end;
 				switch (foo.type) {
 					case token::error:
 						log << "error";
@@ -51,16 +50,16 @@ int main(int argc, const char *argv[])
 						log << "done";
 						break;
 					case token::number:
-						log << "number(" << foo.value() << ")";
+						log << "number\"" << *foo << "\"";
 						break;
 					case token::literal:
-						log << "literal(" << foo.value() << ")";
+						log << "literal\"" << *foo << "\"";
 						break;
 					case token::symbol:
-						log << "symbol(" << foo.value() << ")";
+						log << "symbol\"" << *foo << "\"";
 						break;
 					case token::opcode:
-						log << "opcode(" << foo.value() << ")";
+						log << "opcode\"" << *foo << "\"";
 						break;
 					case token::lparen:
 					case token::rparen:
@@ -70,7 +69,7 @@ int main(int argc, const char *argv[])
 					case token::rbrace:
 					case token::comma:
 					case token::semicolon:
-						log << foo.value();
+						log << *foo;
 						continue;
 					case token::newline:
 						log << endl;

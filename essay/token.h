@@ -16,7 +16,6 @@
 #ifndef TOKEN_H
 #define TOKEN_H
 
-#include <stddef.h>
 #include <string>
 
 struct token
@@ -38,11 +37,11 @@ struct token
 		rbrace,
 		newline
 	} type;
-	const char *addr;
-	size_t len;
-	std::string value() const { return std::string(addr, len); }
-	token(const char *pos, const char *end);
-	token(const std::string &src);
+	std::string::const_iterator begin;
+	std::string::const_iterator end;
+	operator int() const { return type; }
+	std::string operator*() const { return std::string(begin, end); }
+	token(std::string::const_iterator pos, std::string::const_iterator end);
 };
 
 #endif //TOKEN_H

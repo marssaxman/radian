@@ -16,83 +16,82 @@
 #include "token.h"
 #include <ctype.h>
 
-
-
-token::token(const char *pos, const char *end):
-	type(error),
-	addr(pos),
-	len(0)
+static bool isident(char c)
 {
-	// skip whitespace
-	while (pos < end && isblank(*pos)) {
-		type = eof;
-		addr = ++pos;
-	}
-	// if we ran out of input, there's no more work to do
-	if (pos == end) {
-		return;
-	}
-	// categorize the token by its first character
-	char c = *pos;
-	len = 1;
+	return isalnum(c) || '_' == c;
+}
+
+static bool isopcode(char c)
+{
 	switch (c) {
-		case '\n': type = newline; return;
-		case '(': type = lparen; return;
-		case ')': type = rparen; return;
-		case '[': type = lbracket; return;
-		case ']': type = rbracket; return;
-		case '{': type = lbrace; return;
-		case '}': type = rbrace; return;
-		case ',': type = comma; return;
-		case ';': type = semicolon; return;
-		case '\\':
-			type = literal;
-			while (++pos < end && isalnum(*pos)) {
-				++len;
-			}
-			return;
-		case '#':
-			type = newline; // a comment, actually
-			while (++pos < end && '\n' != *pos) {
-				++len;
-			}
-			return;
-		default: break;
-	}
-	if (isdigit(c)) {
-		type = number;
-		while (++pos < end && isdigit(*pos)) {
-			++len;
-		}
-	} else if (isalpha(c) || '_' == c) {
-		type = symbol;
-		while (++pos < end && (isalnum(*pos) || '_' == *pos)) {
-			++len;
-		}
-	} else if (ispunct(c)) {
-		type = opcode;
-		while (++pos < end) switch (c = *pos) {
-			case '#':
-			case '\\':
-			case '(':
-			case ')':
-			case '[':
-			case ']':
-			case '{':
-			case '}':
-			case ',':
-			case ';':
-			case '_': return;
-			default:
-				if (!ispunct(c)) return;
-				++len;
-				continue;
-		}
+		case '!':
+		case '\"':
+		case '$':
+		case '%':
+		case '&':
+		case '\'':
+		case '*':
+		case '+':
+		case '-':
+		case '.':
+		case '/':
+		case ':':
+		case '<':
+		case '=':
+		case '>':
+		case '?':
+		case '@':
+		case '^':
+		case '`':
+		case '|':
+		case '~': return true;
+		default: return false;
 	}
 }
 
-token::token(const std::string &src):
-	token(src.c_str(), src.c_str() + src.size())
+token::token(std::string::const_iterator pos, std::string::const_iterator end):
+	type(error),
+	begin(end),
+	end(end)
 {
+	// skip whitespace
+	while (pos < end && isblank(*pos)) {
+		++pos;
+	}
+	begin = pos;
+	// if there's at least one char, there's a token; categorize it
+	if (pos < end) switch (char c = *pos++) {
+		case '\n': type = newline; break;
+		case '(': type = lparen; break;
+		case ')': type = rparen; break;
+		case '[': type = lbracket; break;
+		case ']': type = rbracket; break;
+		case '{': type = lbrace; break;
+		case '}': type = rbrace; break;
+		case ',': type = comma; break;
+		case ';': type = semicolon; break;
+		case '\\':
+			type = literal;
+			while (pos < end && isalnum(*pos)) ++pos;
+			break;
+		case '#':
+			type = newline; // a comment, actually
+			while (pos < end && '\n' != *pos) ++pos;
+			break;
+		default:
+			if (isdigit(c)) {
+				type = number;
+				while (pos < end && isdigit(*pos)) ++pos;
+			} else if (isalpha(c) || '_' == c) {
+				type = symbol;
+				while (pos < end && isident(*pos)) ++pos;
+			} else if (ispunct(c)) {
+				type = opcode;
+				while (pos < end && isopcode(*pos)) ++pos;
+			}
+	} else {
+		type = eof;
+	}
+	this->end = pos;
 }
 
