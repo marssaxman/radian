@@ -25,7 +25,6 @@ struct token {
 		error = -1,
 		eof = 0,
 		number,
-		literal,
 		symbol,
 		opcode,
 		separator,

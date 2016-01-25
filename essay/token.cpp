@@ -39,6 +39,7 @@ static bool isoperator(char c)
 		case '>':
 		case '?':
 		case '@':
+		case '\\':
 		case '^':
 		case '`':
 		case '|':
@@ -68,10 +69,6 @@ token::token(std::string::const_iterator pos, std::string::const_iterator end):
 		case '}': type = closing; break;
 		case ',':
 		case ';': type = separator; break;
-		case '\\':
-			type = literal;
-			while (pos < end && isalnum(*pos)) ++pos;
-			break;
 		case '#':
 			type = newline; // a comment, actually
 			while (pos < end && '\n' != *pos) ++pos;
