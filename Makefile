@@ -1,8 +1,9 @@
 
 default: all
-all: compiler linker
+all: compiler linker essay
 compiler: bin/compile
 linker: bin/link
+essay: bin/essay
 
 include srctree.mk
 -include $(call findtype, d, obj)
@@ -27,6 +28,16 @@ obj/linker/%.o: linker/%.cpp
 
 asmjit/libasmjit.a:
 	$(MAKE) -C asmjit
+
+
+ESSAY_OBJS:=$(call objs, cpp, essay, obj/essay)
+bin/essay: $(ESSAY_OBJS)
+	@mkdir -p $(@D)
+	g++ -o $@ $^
+obj/essay/%.o: essay/%.cpp
+	@mkdir -p $(@D)
+	$(CC) -Iessay $(CXXFLAGS) -c $< -o $@
+
 
 clean:
 	-@rm -rf bin obj
