@@ -28,25 +28,16 @@ struct token {
 		literal,
 		symbol,
 		opcode,
-		comma,
-		semicolon,
-		lparen,
-		rparen,
-		lbracket,
-		rbracket,
-		lbrace,
-		rbrace,
+		separator,
+		opening,
+		closing,
 		newline
 	} type;
 	std::string text() const { return std::string(begin, end); }
-	std::string operator*() const { return text(); }
 	token(std::string::const_iterator pos, std::string::const_iterator end);
 	bool operator==(const token &other) const;
 	bool operator!=(const token &other) const;
 };
-
-// lexer: iterator through a string that returns tokens
-// knows whether it is done or not
 
 class lexer
 {
@@ -55,11 +46,13 @@ class lexer
 public:
 	lexer(const std::string &input): lexer(input.begin(), input.end()) {}
 	lexer(std::string::const_iterator b, std::string::const_iterator e);
+	lexer(const lexer &start, const lexer &end);
 	operator bool() const { return value.begin != enditer; }
 	const token &operator*() const { return value; }
+	const token *operator->() const { return &value; }
 	lexer &operator++();
-	lexer begin() { return *this; }
-	lexer end() { return lexer(enditer, enditer); }
+	lexer begin() const { return *this; }
+	lexer end() const { return lexer(enditer, enditer); }
 	bool operator==(const lexer&) const;
 	bool operator!=(const lexer&) const;
 };

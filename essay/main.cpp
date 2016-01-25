@@ -16,16 +16,28 @@
 #include <iostream>
 #include <sstream>
 #include <fstream>
+#include <memory>
 #include "logstream.h"
 #include "token.h"
+#include "ast.h"
 
-using std::endl;
+static void parse(const lexer &input, std::ostream &log)
+{
+	for (lexer pos = input.begin(); pos; ++pos) {
+		switch (pos->type) {
+			case token::opening:
+			case token::closing:
+			case token::separator:
+			default: break;
+		}
+	}
+}
 
 int main(int argc, const char *argv[])
 {
 	logstream log(std::string(argv[0]) + ": ", std::cerr);
 	if (argc <= 1) {
-		log << "fail: no input files" << endl;
+		log << "fail: no input files" << std::endl;
 	}
 	for (int i = 1; i < argc; ++i) {
 		std::string path(argv[i]);
@@ -37,44 +49,7 @@ int main(int argc, const char *argv[])
 			src.close();
 			std::string text = buf.str();
 			lexer input(text);
-			for (token foo: input) {
-				switch (foo.type) {
-					case token::error:
-						log << "error";
-						break;
-					case token::eof:
-						log << "done";
-						break;
-					case token::number:
-						log << "number\"" << *foo << "\"";
-						break;
-					case token::literal:
-						log << "literal\"" << *foo << "\"";
-						break;
-					case token::symbol:
-						log << "symbol\"" << *foo << "\"";
-						break;
-					case token::opcode:
-						log << "opcode\"" << *foo << "\"";
-						break;
-					case token::lparen:
-					case token::rparen:
-					case token::lbracket:
-					case token::rbracket:
-					case token::lbrace:
-					case token::rbrace:
-					case token::comma:
-					case token::semicolon:
-						log << *foo;
-						continue;
-					case token::newline:
-						log << endl;
-						continue;
-				}
-				log << " ";
-			}
-
-
+			parse(input, log);
 		} else {
 			log << "fail: could not read " << path << std::endl;
 		}

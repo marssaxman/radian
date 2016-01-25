@@ -25,11 +25,9 @@ static bool isoperator(char c)
 {
 	switch (c) {
 		case '!':
-		case '\"':
 		case '$':
 		case '%':
 		case '&':
-		case '\'':
 		case '*':
 		case '+':
 		case '-':
@@ -62,14 +60,14 @@ token::token(std::string::const_iterator pos, std::string::const_iterator end):
 	// if there's at least one char, there's a token; categorize it
 	if (pos < end) switch (char c = *pos++) {
 		case '\n': type = newline; break;
-		case '(': type = lparen; break;
-		case ')': type = rparen; break;
-		case '[': type = lbracket; break;
-		case ']': type = rbracket; break;
-		case '{': type = lbrace; break;
-		case '}': type = rbrace; break;
-		case ',': type = comma; break;
-		case ';': type = semicolon; break;
+		case '(':
+		case '[':
+		case '{': type = opening; break;
+		case ')':
+		case ']':
+		case '}': type = closing; break;
+		case ',':
+		case ';': type = separator; break;
 		case '\\':
 			type = literal;
 			while (pos < end && isalnum(*pos)) ++pos;
@@ -85,7 +83,7 @@ token::token(std::string::const_iterator pos, std::string::const_iterator end):
 			} else if (isalpha(c) || '_' == c) {
 				type = symbol;
 				while (pos < end && isident(*pos)) ++pos;
-			} else if (ispunct(c)) {
+			} else if (isoperator(c)) {
 				type = opcode;
 				while (pos < end && isoperator(*pos)) ++pos;
 			}
@@ -107,6 +105,11 @@ bool token::operator!=(const token &other) const
 
 lexer::lexer(std::string::const_iterator b, std::string::const_iterator e):
 	value(b, e), enditer(e)
+{
+}
+
+lexer::lexer(const lexer &start, const lexer &end):
+	value(start.value), enditer(end.value.begin)
 {
 }
 
