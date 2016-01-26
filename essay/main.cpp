@@ -18,16 +18,16 @@
 #include <fstream>
 #include <memory>
 #include "logstream.h"
-#include "token.h"
+#include "lexer.h"
 #include "ast.h"
 
-static void parse(const lexer &input, std::ostream &log)
+static void parse(const lexer::iterator &input, std::ostream &log)
 {
-	for (lexer pos = input.begin(); pos; ++pos) {
+	for (lexer::iterator pos = input.begin(); pos; ++pos) {
 		switch (pos->type) {
-			case token::opening:
-			case token::closing:
-			case token::separator:
+			case lexer::token::opening:
+			case lexer::token::closing:
+			case lexer::token::separator:
 			default: break;
 		}
 	}
@@ -48,7 +48,7 @@ int main(int argc, const char *argv[])
 			buf << src.rdbuf();
 			src.close();
 			std::string text = buf.str();
-			lexer input(text);
+			lexer::iterator input(text);
 			parse(input, log);
 		} else {
 			log << "fail: could not read " << path << std::endl;

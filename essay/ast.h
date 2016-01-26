@@ -16,48 +16,39 @@
 #ifndef AST_H
 #define AST_H
 
-#include "token.h"
+#include "lexer.h"
 #include <memory>
 #include <deque>
 
 namespace ast {
 
-// each class of node represents some grammatical structure that the parser
-// may find in the input. the parser will create nodes as appropriate when it
-// matches patterns in the token stream. a node therefore represents a sequence
-// of tokens, and the node class' job is to extract the information relevant to
-// that pattern in a form which will be useful for later analysis.
+// input: procedure
+// procedure: (statement terminator)*
+// terminator: (';' | <newline>) nl
+// statement: definition | invocation
+// definition: <symbol> '=' <nl> expression
+// invocation: <symbol> compound
+// compound: expression (',' nl compound)*
+// expression: primary (infix nl expression)*
+// infix: ...the usual operators...
+// primary: prefix* term suffix*
+// prefix: '!' | '~' | '+' | '-' 
+// term: <symbol> | <number> | group
+// suffix: member | group
+// member: '.' nl <symbol>
+// group: parens | braces | brackets
+// parens: '(' nl compound nl ')'
+// braces: '{' nl procedure nl '}'
+// brackets: '[' nl compound nl ']'
+// nl: <newline>*
 
-struct visitor;
-
-struct node
-{
-	lexer start;
-	lexer end;
-	virtual void accept(visitor&);
-};
-
-struct group: node
-{
-	std::unique_ptr<node> body;
-	virtual void accept(visitor&) override;
-};
-
-struct sequence: node
-{
-	std::deque<std::unique_ptr<node>> body;
-	virtual void accept(visitor&) override;
-};
-
-struct visitor
-{
-	virtual ~visitor() {}
-	virtual void visit(const node&) {}
-	virtual void enter(const group&) {}
-	virtual void leave(const group&) {}
-	virtual void enter(const sequence&) {}
-	virtual void leave(const sequence&) {}
-};
+// infix operator precedence:
+//	:
+//	* / % << >>
+//	+ - & | ^ ..
+//	< <= = => > != ~= ~!
+//  <- ->
+// only chars not being used are ` @ $ ?
 
 } // namespace ast
 

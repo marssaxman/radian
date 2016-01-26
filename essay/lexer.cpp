@@ -13,8 +13,12 @@
 // You should have received a copy of the GNU General Public License along with
 // Radian. If not, see <http://www.gnu.org/licenses/>.
 
-#include "token.h"
+#include "lexer.h"
 #include <ctype.h>
+
+namespace lexer {
+
+using std::string;
 
 static bool isident(char c)
 {
@@ -48,7 +52,7 @@ static bool isoperator(char c)
 	}
 }
 
-token::token(std::string::const_iterator pos, std::string::const_iterator end):
+token::token(string::const_iterator pos, string::const_iterator end):
 	type(error),
 	begin(end),
 	end(end)
@@ -100,29 +104,31 @@ bool token::operator!=(const token &other) const
 	return !(*this == other);
 }
 
-lexer::lexer(std::string::const_iterator b, std::string::const_iterator e):
+iterator::iterator(string::const_iterator b, string::const_iterator e):
 	value(b, e), enditer(e)
 {
 }
 
-lexer::lexer(const lexer &start, const lexer &end):
+iterator::iterator(const iterator &start, const iterator &end):
 	value(start.value), enditer(end.value.begin)
 {
 }
 
-lexer &lexer::operator++()
+iterator &iterator::operator++()
 {
-	return *this = lexer(value.end, enditer);
+	return *this = iterator(value.end, enditer);
 }
 
-bool lexer::operator==(const lexer &other) const
+bool iterator::operator==(const iterator &other) const
 {
 	return this->value == other.value && this->enditer == other.enditer;
 }
 
-bool lexer::operator!=(const lexer &other) const
+bool iterator::operator!=(const iterator &other) const
 {
 	return !(*this == other);
 }
+
+} // namespace lexer
 
 

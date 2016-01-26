@@ -15,24 +15,7 @@
 
 #include "ast.h"
 
-void ast::node::accept(visitor &v)
-{
-	v.visit(*this);
-}
+namespace ast {
 
-void ast::group::accept(visitor &v)
-{
-	v.enter(*this);
-	body->accept(v);
-	v.leave(*this);
-}
 
-void ast::sequence::accept(visitor &v)
-{
-	v.enter(*this);
-	for (auto &n: body) {
-		n->accept(v);
-	}
-	v.leave(*this);
-}
-
+} // namespace ast
