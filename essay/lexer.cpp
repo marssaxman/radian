@@ -20,36 +20,14 @@ namespace lexer {
 
 using std::string;
 
-static bool isident(char c)
+static bool isidentstart(char c)
 {
-	return isalnum(c) || '_' == c;
+	return isalpha(c) || '_' == c;
 }
 
-static bool isoperator(char c)
+static bool isidentbody(char c)
 {
-	switch (c) {
-		case '!':
-		case '$':
-		case '%':
-		case '&':
-		case '*':
-		case '+':
-		case '-':
-		case '.':
-		case '/':
-		case ':':
-		case '<':
-		case '=':
-		case '>':
-		case '?':
-		case '@':
-		case '\\':
-		case '^':
-		case '`':
-		case '|':
-		case '~': return true;
-		default: return false;
-	}
+	return isalnum(c) || '_' == c;
 }
 
 token::token(string::const_iterator pos, string::const_iterator end):
@@ -64,29 +42,39 @@ token::token(string::const_iterator pos, string::const_iterator end):
 	begin = pos;
 	// if there's at least one char, there's a token; categorize it
 	if (pos < end) switch (char c = *pos++) {
-		case '\n': type = newline; break;
+		case '\n':
 		case '(':
 		case '[':
-		case '{': type = opening; break;
+		case '{':
 		case ')':
 		case ']':
-		case '}': type = closing; break;
+		case '}':
 		case ',':
-		case ';': type = separator; break;
+		case ';': type = static_cast<enum id>(c); break;
 		case '#':
-			type = newline; // a comment, actually
+			// comments are reported as newline characters, but we must
+			// skip over all the comment body characters until we reach an
+			// actual end-of-line
+			type = newline;
 			while (pos < end && '\n' != *pos) ++pos;
 			break;
+		case '0':
+		case '1':
+		case '2':
+		case '3':
+		case '4':
+		case '5':
+		case '6':
+		case '7':
+		case '8':
+		case '9':
+			type = number;
+			while (pos < end && isdigit(*pos)) ++pos;
+			break;
 		default:
-			if (isdigit(c)) {
-				type = number;
-				while (pos < end && isdigit(*pos)) ++pos;
-			} else if (isalpha(c) || '_' == c) {
+			if (isidentstart(c)) {
 				type = symbol;
-				while (pos < end && isident(*pos)) ++pos;
-			} else if (isoperator(c)) {
-				type = opcode;
-				while (pos < end && isoperator(*pos)) ++pos;
+				while (pos < end && isidentbody(*pos)) ++pos;
 			}
 	} else {
 		type = eof;
@@ -119,6 +107,13 @@ iterator &iterator::operator++()
 	return *this = iterator(value.end, enditer);
 }
 
+iterator iterator::operator++(int)
+{
+	iterator temp(*this);
+	++(*this);
+	return temp;
+}
+
 bool iterator::operator==(const iterator &other) const
 {
 	return this->value == other.value && this->enditer == other.enditer;
@@ -128,6 +123,12 @@ bool iterator::operator!=(const iterator &other) const
 {
 	return !(*this == other);
 }
+
+bool iterator::match(token::id type) const
+{
+	return (value.begin != enditer) && (value.type == type);
+}
+
 
 } // namespace lexer
 

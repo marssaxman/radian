@@ -19,19 +19,7 @@
 #include <memory>
 #include "logstream.h"
 #include "lexer.h"
-#include "ast.h"
-
-static void parse(const lexer::iterator &input, std::ostream &log)
-{
-	for (lexer::iterator pos = input.begin(); pos; ++pos) {
-		switch (pos->type) {
-			case lexer::token::opening:
-			case lexer::token::closing:
-			case lexer::token::separator:
-			default: break;
-		}
-	}
-}
+#include "parser.h"
 
 int main(int argc, const char *argv[])
 {
@@ -49,7 +37,7 @@ int main(int argc, const char *argv[])
 			src.close();
 			std::string text = buf.str();
 			lexer::iterator input(text);
-			parse(input, log);
+			parser astgen(input, log);
 		} else {
 			log << "fail: could not read " << path << std::endl;
 		}

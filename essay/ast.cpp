@@ -17,5 +17,10 @@
 
 namespace ast {
 
+node::node(lexer::iterator b, lexer::iterator e):
+	begin(b), end(e)
+{
+}
+
 
 } // namespace ast

@@ -23,16 +23,23 @@ namespace lexer {
 struct token {
 	std::string::const_iterator begin;
 	std::string::const_iterator end;
-	enum {
+	enum id {
 		error = -1,
 		eof = 0,
+		newline = '\n',
+		comma = ',',
+		semicolon = ';',
+		equals = '=',
+		ampersand = '&',
+		pipe = '|',
+		lparen = '(',
+		rparen = ')',
+		lbracket = '[',
+		rbracket = ']',
+		lbrace = '{',
+		rbrace = '}',
 		number,
 		symbol,
-		opcode,
-		separator,
-		opening,
-		closing,
-		newline
 	} type;
 	std::string text() const { return std::string(begin, end); }
 	token(std::string::const_iterator pos, std::string::const_iterator end);
@@ -52,10 +59,12 @@ public:
 	const token &operator*() const { return value; }
 	const token *operator->() const { return &value; }
 	iterator &operator++();
+	iterator operator++(int);
 	iterator begin() const { return *this; }
 	iterator end() const { return iterator(enditer, enditer); }
 	bool operator==(const iterator&) const;
 	bool operator!=(const iterator&) const;
+	bool match(token::id type) const;
 };
 
 } // namespace lexer

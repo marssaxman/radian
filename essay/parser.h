@@ -13,45 +13,37 @@
 // You should have received a copy of the GNU General Public License along with
 // Radian. If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef AST_H
-#define AST_H
+#ifndef PARSER_H
+#define PARSER_H
 
+#include <iostream>
 #include "lexer.h"
+#include "ast.h"
 
-namespace ast {
-
-struct node
+class parser
 {
-	lexer::iterator begin;
-	lexer::iterator end;
-	node(lexer::iterator begin, lexer::iterator end);
+	lexer::iterator source;
+	std::ostream &log;
+	lexer::token::id current = lexer::token::error;
+	bool match(lexer::token::id);
+	bool procedure();
+	bool terminator();
+	bool statement();
+	bool assignment();
+	bool invocation();
+	bool compound();
+	bool expression();
+	bool infix();
+	bool primary();
+	bool term();
+	bool subscript();
+	bool group();
+	bool parens();
+	bool brackets();
+	bool braces();
+public:
+	parser(lexer::iterator source, std::ostream &log);
 };
 
-struct group: node
-{
-	node *body;
-	group(lexer::iterator begin, lexer::iterator end, node *b):
-		node(begin, end), body(b) {}
-};
+#endif //PARSER_H
 
-struct parens: group
-{
-	parens(lexer::iterator begin, lexer::iterator end, node *body):
-		group(begin, end, body) {}
-};
-
-struct brackets: group
-{
-	brackets(lexer::iterator begin, lexer::iterator end, node *body):
-		group(begin, end, body) {}
-};
-
-struct braces: group
-{
-	braces(lexer::iterator begin, lexer::iterator end, node *body):
-		group(begin, end, body) {}
-};
-
-} // namespace ast
-
-#endif //AST_H
