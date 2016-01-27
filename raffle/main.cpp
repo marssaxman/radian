@@ -8,17 +8,18 @@
 #include <sstream>
 #include <fstream>
 #include <memory>
-#include "logstream.h"
 #include "lexer.h"
 #include "parser.h"
 
 int main(int argc, const char *argv[])
 {
-	logstream log(std::string(argv[0]) + ": ", std::cerr);
-	if (argc <= 1) {
-		log << "fail: no input files" << std::endl;
+	for (std::string line; std::getline(std::cin, line);) {
+		for (lexer::iterator input(text); input; ++input) {
+			//
+		}
 	}
-	for (int i = 1; i < argc; ++i) {
+
+
 		std::string path(argv[i]);
 		std::ifstream src(path);
 		if (src) {
