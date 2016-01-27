@@ -95,7 +95,7 @@ int main(int argc, const char *argv[])
 	// Read source files named in the arguments, compile them, and write the
 	// resulting DFGs to stdout.
 	if (argc <= 1) {
-		std::cerr << "radian-compile: fail: no input files" << std::endl;
+		std::cerr << "radian: fail: no input files" << std::endl;
 		return EXIT_FAILURE;
 	}
 	bool fail = false;
